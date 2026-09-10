@@ -1,5 +1,8 @@
 use tauri::{Emitter, Manager};
 
+#[cfg(windows)]
+mod windows_assoc;
+
 #[tauri::command]
 fn get_cli_args() -> Vec<String> {
     std::env::args().collect()
@@ -13,6 +16,11 @@ fn exit_app(app: tauri::AppHandle) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .setup(|_app| {
+            #[cfg(windows)]
+            windows_assoc::register_file_associations();
+            Ok(())
+        })
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             let _ = app.emit("open-file-argument", argv);
             if let Some(window) = app.get_webview_window("main") {
