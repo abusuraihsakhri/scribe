@@ -1,0 +1,521 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { EditorView } from "@codemirror/view";
+import { undo, redo } from "@codemirror/commands";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { message } from "@tauri-apps/plugin-dialog";
+import { Toolbar } from "./components/Toolbar";
+import { FormattingToolbar } from "./components/FormattingToolbar";
+import { StatusBar } from "./components/StatusBar";
+import { Workspace } from "./components/Workspace";
+import { WelcomeScreen } from "./components/WelcomeScreen";
+import { Sidebar } from "./components/Sidebar";
+import { TabBar } from "./tabs/TabBar";
+import { SearchPanel } from "./search/SearchPanel";
+import { CommandPalette } from "./commands/CommandPalette";
+import { buildCommands } from "./commands/commands";
+import { SettingsDialog } from "./settings/SettingsDialog";
+import { UnsavedChangesDialog, type UnsavedChangesChoice } from "./components/UnsavedChangesDialog";
+import { useDocumentsStore, isDirty } from "./state/documentsStore";
+import { useUIStore } from "./state/uiStore";
+import { useSettingsStore } from "./settings/settingsStore";
+import { useRecentFilesStore } from "./state/recentFilesStore";
+import { pickAndOpenFiles, openFileAtPath, FileOperationError } from "./filesystem/fs";
+import { computeTextStats } from "./utils/textStats";
+import { applyFormat } from "./editor/formatting";
+import type { ThemeMode } from "./state/types";
+
+const THEME_CYCLE: ThemeMode[] = ["light", "dark", "system"];
+
+export default function App() {
+  const documents = useDocumentsStore((s) => s.documents);
+  const activeId = useDocumentsStore((s) => s.activeId);
+  const newDocument = useDocumentsStore((s) => s.newDocument);
+  const openFromDisk = useDocumentsStore((s) => s.openFromDisk);
+  const updateContent = useDocumentsStore((s) => s.updateContent);
+  const closeDocumentInStore = useDocumentsStore((s) => s.closeDocument);
+  const save = useDocumentsStore((s) => s.save);
+  const saveAs = useDocumentsStore((s) => s.saveAs);
+
+  const viewMode = useUIStore((s) => s.viewMode);
+  const setViewMode = useUIStore((s) => s.setViewMode);
+  const sidebarVisible = useUIStore((s) => s.sidebarVisible);
+  const toggleSidebar = useUIStore((s) => s.toggleSidebar);
+  const theme = useUIStore((s) => s.theme);
+  const setTheme = useUIStore((s) => s.setTheme);
+
+  const settings = useSettingsStore();
+  const addRecent = useRecentFilesStore((s) => s.addRecent);
+
+  const activeDoc = useMemo(() => documents.find((d) => d.id === activeId) ?? null, [documents, activeId]);
+  const editorRef = useRef<EditorView | null>(null);
+  const [cursor, setCursor] = useState({ line: 1, column: 1 });
+  const [pendingClose, setPendingClose] = useState<{
+    fileName: string;
+    resolve: (choice: UnsavedChangesChoice) => void;
+  } | null>(null);
+  const [searchMode, setSearchMode] = useState<"search" | "replace" | null>(null);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [zoom, setZoom] = useState(100);
+
+  // Sync settings with uiStore
+  useEffect(() => {
+    if (settings.theme !== theme) {
+      setTheme(settings.theme);
+    }
+  }, [settings.theme, theme, setTheme]);
+
+  // Apply zoom
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${zoom}%`;
+  }, [zoom]);
+
+  // Autosave
+  useEffect(() => {
+    if (!settings.autosave || !activeId) return;
+    const interval = setInterval(() => {
+      const doc = useDocumentsStore.getState().documents.find((d) => d.id === activeId);
+      if (doc && isDirty(doc)) {
+        void useDocumentsStore.getState().save(activeId);
+      }
+    }, settings.autosaveIntervalMs);
+    return () => clearInterval(interval);
+  }, [settings.autosave, settings.autosaveIntervalMs, activeId]);
+
+  const showError = useCallback(async (title: string, err: unknown) => {
+    const detail = err instanceof FileOperationError ? err.message : "An unexpected error occurred.";
+    await message(detail, { title, kind: "error" });
+  }, []);
+
+  const handleNew = useCallback(() => {
+    newDocument();
+  }, [newDocument]);
+
+  const handleOpen = useCallback(async () => {
+    try {
+      const files = await pickAndOpenFiles();
+      files.forEach((f) => {
+        openFromDisk(f);
+        addRecent(f.path, f.name);
+      });
+    } catch (err) {
+      await showError("Couldn't open file", err);
+    }
+  }, [openFromDisk, showError, addRecent]);
+
+  const handleOpenRecent = useCallback(async (path: string) => {
+    try {
+      const file = await openFileAtPath(path);
+      openFromDisk(file);
+      addRecent(file.path, file.name);
+    } catch (err) {
+      await showError("Couldn't open file", err);
+    }
+  }, [openFromDisk, showError, addRecent]);
+
+  const handleSave = useCallback(async () => {
+    if (!activeId) return;
+    try {
+      const result = await save(activeId);
+      if (result) {
+        const doc = useDocumentsStore.getState().documents.find((d) => d.id === activeId);
+        if (doc?.path) addRecent(doc.path, doc.title);
+      }
+    } catch (err) {
+      await showError("Couldn't save file", err);
+    }
+  }, [activeId, save, showError, addRecent]);
+
+  const handleSaveAs = useCallback(async () => {
+    if (!activeId) return;
+    try {
+      const result = await saveAs(activeId);
+      if (result) {
+        const doc = useDocumentsStore.getState().documents.find((d) => d.id === activeId);
+        if (doc?.path) addRecent(doc.path, doc.title);
+      }
+    } catch (err) {
+      await showError("Couldn't save file", err);
+    }
+  }, [activeId, saveAs, showError, addRecent]);
+
+  const confirmDiscardIfDirty = useCallback(
+    async (docId: string): Promise<boolean> => {
+      const doc = documents.find((d) => d.id === docId);
+      if (!doc || !isDirty(doc)) return true;
+
+      const choice = await new Promise<UnsavedChangesChoice>((resolve) => {
+        setPendingClose({ fileName: doc.title, resolve });
+      });
+      setPendingClose(null);
+
+      if (choice === "cancel") return false;
+      if (choice === "save") {
+        const saved = await save(docId);
+        return saved;
+      }
+      return true;
+    },
+    [documents, save],
+  );
+
+  const handleCloseDocument = useCallback(
+    async (docId: string) => {
+      const canClose = await confirmDiscardIfDirty(docId);
+      if (canClose) closeDocumentInStore(docId);
+    },
+    [confirmDiscardIfDirty, closeDocumentInStore],
+  );
+
+  const handleCloseOthers = useCallback(
+    async (keepId: string) => {
+      for (const doc of documents) {
+        if (doc.id === keepId) continue;
+        const canClose = await confirmDiscardIfDirty(doc.id);
+        if (canClose) closeDocumentInStore(doc.id);
+        else break;
+      }
+    },
+    [documents, confirmDiscardIfDirty, closeDocumentInStore],
+  );
+
+  const handleCloseAll = useCallback(async () => {
+    for (const doc of documents) {
+      const canClose = await confirmDiscardIfDirty(doc.id);
+      if (canClose) closeDocumentInStore(doc.id);
+      else break;
+    }
+  }, [documents, confirmDiscardIfDirty, closeDocumentInStore]);
+
+  const handleUndo = useCallback(() => {
+    if (editorRef.current) undo(editorRef.current);
+  }, []);
+  const handleRedo = useCallback(() => {
+    if (editorRef.current) redo(editorRef.current);
+  }, []);
+
+  const handleCycleTheme = useCallback(() => {
+    const next = THEME_CYCLE[(THEME_CYCLE.indexOf(theme) + 1) % THEME_CYCLE.length];
+    setTheme(next);
+    useSettingsStore.getState().update({ theme: next });
+  }, [theme, setTheme]);
+
+  const handleContentChange = useCallback(
+    (value: string) => {
+      if (activeId) updateContent(activeId, value);
+    },
+    [activeId, updateContent],
+  );
+
+  const handleFullscreen = useCallback(async () => {
+    const win = getCurrentWindow();
+    const isFull = await win.isFullscreen();
+    await win.setFullscreen(!isFull);
+  }, []);
+
+  const handleExportHtml = useCallback(async () => {
+    if (!activeDoc) return;
+    const { save: saveDialog } = await import("@tauri-apps/plugin-dialog");
+    const { writeTextFile } = await import("@tauri-apps/plugin-fs");
+    const path = await saveDialog({
+      defaultPath: activeDoc.title.replace(/\.md$/, ".html"),
+      filters: [{ name: "HTML", extensions: ["html"] }],
+    });
+    if (!path) return;
+    // Simple HTML export with inline styles
+    const safeTitle = activeDoc.title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${safeTitle}</title>
+<style>
+body { font-family: "Segoe UI", system-ui, sans-serif; max-width: 42rem; margin: 0 auto; padding: 2rem; line-height: 1.7; color: #1a1a1a; }
+h1,h2,h3,h4,h5,h6 { font-weight: 600; line-height: 1.3; }
+h1 { font-size: 2rem; border-bottom: 1px solid #e5e5e5; padding-bottom: 0.5rem; }
+h2 { font-size: 1.5rem; border-bottom: 1px solid #e5e5e5; padding-bottom: 0.375rem; }
+a { color: #0078d4; }
+code { font-family: "Cascadia Code", monospace; background: #f3f3f3; padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.85em; }
+pre { background: #f3f3f3; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+blockquote { border-left: 3px solid #0078d4; padding: 0.5rem 1rem; margin: 0 0 1rem; background: #fafafa; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #e5e5e5; padding: 0.5rem 0.75rem; text-align: left; }
+th { background: #fafafa; font-weight: 600; }
+img { max-width: 100%; }
+</style>
+</head>
+<body>${document.querySelector(".markdown-body")?.innerHTML ?? ""}</body>
+</html>`;
+    await writeTextFile(path, html);
+  }, [activeDoc]);
+
+  const handleBold = useCallback(() => { if (editorRef.current) applyFormat(editorRef.current, "bold"); }, []);
+  const handleItalic = useCallback(() => { if (editorRef.current) applyFormat(editorRef.current, "italic"); }, []);
+  const handleInsertLink = useCallback(() => { if (editorRef.current) applyFormat(editorRef.current, "link"); }, []);
+
+  // Build command palette commands
+  const commands = useMemo(() => buildCommands({
+    onNew: handleNew,
+    onOpen: () => void handleOpen(),
+    onSave: () => void handleSave(),
+    onSaveAs: () => void handleSaveAs(),
+    onClose: () => { if (activeId) void handleCloseDocument(activeId); },
+    onToggleSidebar: toggleSidebar,
+    onEditorMode: () => setViewMode("editor"),
+    onSplitMode: () => setViewMode("split"),
+    onPreviewMode: () => setViewMode("preview"),
+    onFind: () => setSearchMode("search"),
+    onReplace: () => setSearchMode("replace"),
+    onCycleTheme: handleCycleTheme,
+    onOpenSettings: () => setShowSettings(true),
+    onBold: handleBold,
+    onItalic: handleItalic,
+    onInsertLink: handleInsertLink,
+    onFullscreen: () => void handleFullscreen(),
+    onZoomIn: () => setZoom((z) => Math.min(z + 10, 200)),
+    onZoomOut: () => setZoom((z) => Math.max(z - 10, 50)),
+    onZoomReset: () => setZoom(100),
+    onExportHtml: () => void handleExportHtml(),
+  }), [handleNew, handleOpen, handleSave, handleSaveAs, activeId, handleCloseDocument, toggleSidebar, setViewMode, handleCycleTheme, handleBold, handleItalic, handleInsertLink, handleFullscreen, handleExportHtml]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      // Don't intercept if command palette or search is open
+      if (showCommandPalette) return;
+
+      const mod = e.ctrlKey || e.metaKey;
+      const key = e.key.toLowerCase();
+
+      // F11 fullscreen
+      if (e.key === "F11") {
+        e.preventDefault();
+        void handleFullscreen();
+        return;
+      }
+
+      if (!mod) return;
+
+      // Ctrl+Shift+P - Command palette
+      if (key === "p" && e.shiftKey) {
+        e.preventDefault();
+        setShowCommandPalette(true);
+        return;
+      }
+
+      // Ctrl+F - Find
+      if (key === "f") {
+        e.preventDefault();
+        setSearchMode((prev) => prev === "search" ? null : "search");
+        return;
+      }
+
+      // Ctrl+H - Replace
+      if (key === "h") {
+        e.preventDefault();
+        setSearchMode((prev) => prev === "replace" ? null : "replace");
+        return;
+      }
+
+      // Ctrl+N - New
+      if (key === "n") {
+        e.preventDefault();
+        handleNew();
+        return;
+      }
+
+      // Ctrl+O - Open
+      if (key === "o") {
+        e.preventDefault();
+        void handleOpen();
+        return;
+      }
+
+      // Ctrl+Shift+S - Save As
+      if (key === "s" && e.shiftKey) {
+        e.preventDefault();
+        void handleSaveAs();
+        return;
+      }
+
+      // Ctrl+S - Save
+      if (key === "s") {
+        e.preventDefault();
+        void handleSave();
+        return;
+      }
+
+      // Ctrl+W - Close
+      if (key === "w") {
+        e.preventDefault();
+        if (activeId) void handleCloseDocument(activeId);
+        return;
+      }
+
+      // Ctrl+\ - Toggle sidebar
+      if (key === "\\") {
+        e.preventDefault();
+        toggleSidebar();
+        return;
+      }
+
+      // Ctrl+1/2/3 - View modes
+      if (key === "1") { e.preventDefault(); setViewMode("editor"); return; }
+      if (key === "2") { e.preventDefault(); setViewMode("split"); return; }
+      if (key === "3") { e.preventDefault(); setViewMode("preview"); return; }
+
+      // Ctrl+B - Bold (handled by CodeMirror keymap when editor focused)
+      // Ctrl+I - Italic (handled by CodeMirror keymap when editor focused)
+      // Ctrl+K - Link (handled by CodeMirror keymap when editor focused)
+
+      // Ctrl+= / Ctrl+- / Ctrl+0 - Zoom
+      if (key === "=" || e.key === "+") { e.preventDefault(); setZoom((z) => Math.min(z + 10, 200)); return; }
+      if (key === "-") { e.preventDefault(); setZoom((z) => Math.max(z - 10, 50)); return; }
+      if (key === "0") { e.preventDefault(); setZoom(100); return; }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [handleNew, handleOpen, handleSave, handleSaveAs, handleCloseDocument, activeId, toggleSidebar, setViewMode, handleFullscreen, showCommandPalette]);
+
+  // Native drag-and-drop
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    void getCurrentWindow()
+      .onDragDropEvent(async (event) => {
+        if (event.payload.type !== "drop") return;
+        for (const path of event.payload.paths) {
+          if (!/\.(md|markdown|mdown|mkd)$/i.test(path)) continue;
+          try {
+            const file = await openFileAtPath(path);
+            openFromDisk(file);
+            addRecent(file.path, file.name);
+          } catch (err) {
+            await showError("Couldn't open file", err);
+          }
+        }
+      })
+      .then((fn) => { unlisten = fn; });
+    return () => unlisten?.();
+  }, [openFromDisk, showError, addRecent]);
+
+  // Window close guard
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    void getCurrentWindow()
+      .onCloseRequested(async (event) => {
+        if (!useSettingsStore.getState().confirmBeforeClose) return;
+        const dirtyDocs = useDocumentsStore.getState().documents.filter(isDirty);
+        if (dirtyDocs.length === 0) return;
+        event.preventDefault();
+        for (const doc of dirtyDocs) {
+          const canClose = await confirmDiscardIfDirty(doc.id);
+          if (!canClose) return;
+        }
+        await getCurrentWindow().destroy();
+      })
+      .then((fn) => { unlisten = fn; });
+    return () => unlisten?.();
+  }, [confirmDiscardIfDirty]);
+
+  // Window title
+  useEffect(() => {
+    const title = activeDoc ? `${isDirty(activeDoc) ? "● " : ""}${activeDoc.title} — Scribe` : "Scribe";
+    void getCurrentWindow().setTitle(title);
+  }, [activeDoc]);
+
+  const stats = useMemo(() => computeTextStats(activeDoc?.content ?? ""), [activeDoc?.content]);
+
+  return (
+    <div className="flex h-screen flex-col bg-[var(--bg-app)]">
+      <Toolbar
+        fileName={activeDoc?.title ?? null}
+        isDirty={activeDoc ? isDirty(activeDoc) : false}
+        viewMode={viewMode}
+        theme={theme}
+        sidebarVisible={sidebarVisible}
+        onNew={handleNew}
+        onOpen={() => void handleOpen()}
+        onSave={() => void handleSave()}
+        onSaveAs={() => void handleSaveAs()}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onViewModeChange={setViewMode}
+        onToggleSidebar={toggleSidebar}
+        onCycleTheme={handleCycleTheme}
+        onOpenSettings={() => setShowSettings(true)}
+      />
+
+      {activeDoc && <FormattingToolbar editorRef={editorRef} />}
+
+      {activeDoc && searchMode && (
+        <SearchPanel editorRef={editorRef} mode={searchMode} onClose={() => setSearchMode(null)} />
+      )}
+
+      <TabBar
+        documents={documents}
+        activeId={activeId}
+        onSelect={(id) => useDocumentsStore.getState().setActive(id)}
+        onClose={(id) => void handleCloseDocument(id)}
+        onCloseOthers={handleCloseOthers}
+        onCloseAll={handleCloseAll}
+        onNew={handleNew}
+      />
+
+      <div className="flex min-h-0 flex-1">
+        {sidebarVisible && (
+          <Sidebar
+            documents={documents}
+            activeId={activeId}
+            onSelect={(id) => useDocumentsStore.getState().setActive(id)}
+            onClose={(id) => void handleCloseDocument(id)}
+            onOpenRecent={(path) => void handleOpenRecent(path)}
+          />
+        )}
+        <div className="min-h-0 flex-1">
+          {activeDoc ? (
+            <Workspace
+              viewMode={viewMode}
+              content={activeDoc.content}
+              onChange={handleContentChange}
+              editorRef={editorRef}
+              onCursorInfo={setCursor}
+              editorFontSize={settings.editorFontSize}
+              editorFontFamily={settings.editorFontFamily}
+              editorWordWrap={settings.editorWordWrap}
+              editorLineNumbers={settings.editorLineNumbers}
+              editorHighlightLine={settings.editorHighlightLine}
+              editorTabSize={settings.editorTabSize}
+              docPath={activeDoc.path}
+            />
+          ) : (
+            <WelcomeScreen
+              onNew={handleNew}
+              onOpen={() => void handleOpen()}
+              onOpenRecent={(path) => void handleOpenRecent(path)}
+            />
+          )}
+        </div>
+      </div>
+
+      <StatusBar
+        words={stats.words}
+        characters={stats.characters}
+        line={cursor.line}
+        column={cursor.column}
+        content={activeDoc?.content}
+      />
+
+      {pendingClose && (
+        <UnsavedChangesDialog fileName={pendingClose.fileName} onChoice={(choice) => pendingClose.resolve(choice)} />
+      )}
+
+      {showCommandPalette && (
+        <CommandPalette commands={commands} onClose={() => setShowCommandPalette(false)} />
+      )}
+
+      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} />}
+    </div>
+  );
+}

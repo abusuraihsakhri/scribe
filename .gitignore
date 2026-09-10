@@ -1,0 +1,42 @@
+logs
+*.log
+npm-debug.log*
+yarn-*
+pnpm-*
+lerna-*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Tauri build output
+src-tauri/target/
+*.exe
+*.msi
+*.nsis
+*.dmg
+*.app
+src-tauri/binaries/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Tool directories
+.commandcode/
+.impeccable/
+.spec/
