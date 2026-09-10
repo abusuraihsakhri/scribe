@@ -42,6 +42,11 @@ export function SearchPanel({ editorRef, mode, onClose }: SearchPanelProps) {
     let m: RegExpExecArray | null;
     while ((m = pattern.exec(text)) !== null) {
       matches.push({ from: m.index, to: m.index + m[0].length });
+      if (m[0].length === 0) {
+        if (pattern.lastIndex === m.index) {
+          pattern.lastIndex++;
+        }
+      }
       if (matches.length > 10000) break;
     }
     setMatchCount(matches.length);
@@ -120,7 +125,7 @@ export function SearchPanel({ editorRef, mode, onClose }: SearchPanelProps) {
       pattern = new RegExp(wrapped, flags);
     } catch { return; }
 
-    const newText = text.replace(pattern, replaceText);
+    const newText = text.replace(pattern, () => replaceText);
     if (newText !== text) {
       view.dispatch({ changes: { from: 0, to: text.length, insert: newText } });
     }

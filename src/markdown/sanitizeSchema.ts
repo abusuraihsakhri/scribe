@@ -11,8 +11,8 @@ export const previewSanitizeSchema: Schema = {
   ...defaultSchema,
   attributes: {
     ...defaultSchema.attributes,
-    code: [...(defaultSchema.attributes?.code ?? []), ["className", /^(language|hljs)-/]],
-    span: [...(defaultSchema.attributes?.span ?? []), ["className", /^hljs-/]],
+    code: [...(defaultSchema.attributes?.code ?? []), ["className", /^(language-|hljs)/]],
+    span: [...(defaultSchema.attributes?.span ?? []), ["className", /^hljs/]],
     li: [...(defaultSchema.attributes?.li ?? []), "className"],
     ul: [...(defaultSchema.attributes?.ul ?? []), "className"],
     input: [...(defaultSchema.attributes?.input ?? []), "type", "checked", "disabled"],

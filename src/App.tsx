@@ -217,13 +217,38 @@ export default function App() {
     if (!activeDoc) return;
     const { save: saveDialog } = await import("@tauri-apps/plugin-dialog");
     const { writeTextFile } = await import("@tauri-apps/plugin-fs");
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const React = await import("react");
+    const { default: ReactMarkdown } = await import("react-markdown");
+    const { default: remarkGfm } = await import("remark-gfm");
+    const { default: rehypeHighlight } = await import("rehype-highlight");
+    const { default: rehypeSanitize } = await import("rehype-sanitize");
+    const { previewSanitizeSchema } = await import("./markdown/sanitizeSchema");
+
     const path = await saveDialog({
       defaultPath: activeDoc.title.replace(/\.md$/, ".html"),
       filters: [{ name: "HTML", extensions: ["html"] }],
     });
     if (!path) return;
-    // Simple HTML export with inline styles
-    const safeTitle = activeDoc.title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+    const renderedBody = renderToStaticMarkup(
+      React.createElement(
+        ReactMarkdown,
+        {
+          remarkPlugins: [remarkGfm],
+          rehypePlugins: [rehypeHighlight, [rehypeSanitize, previewSanitizeSchema]] as never[],
+        },
+        activeDoc.content,
+      ),
+    );
+
+    const safeTitle = activeDoc.title
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -231,22 +256,28 @@ export default function App() {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${safeTitle}</title>
 <style>
-body { font-family: "Segoe UI", system-ui, sans-serif; max-width: 42rem; margin: 0 auto; padding: 2rem; line-height: 1.7; color: #1a1a1a; }
-h1,h2,h3,h4,h5,h6 { font-weight: 600; line-height: 1.3; }
-h1 { font-size: 2rem; border-bottom: 1px solid #e5e5e5; padding-bottom: 0.5rem; }
-h2 { font-size: 1.5rem; border-bottom: 1px solid #e5e5e5; padding-bottom: 0.375rem; }
-a { color: #0078d4; }
-code { font-family: "Cascadia Code", monospace; background: #f3f3f3; padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.85em; }
-pre { background: #f3f3f3; padding: 1rem; border-radius: 8px; overflow-x: auto; }
-pre code { background: none; padding: 0; }
-blockquote { border-left: 3px solid #0078d4; padding: 0.5rem 1rem; margin: 0 0 1rem; background: #fafafa; }
-table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
-th, td { border: 1px solid #e5e5e5; padding: 0.5rem 0.75rem; text-align: left; }
-th { background: #fafafa; font-weight: 600; }
-img { max-width: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 48rem; margin: 0 auto; padding: 2rem; line-height: 1.7; color: #1f2328; background: #ffffff; }
+h1,h2,h3,h4,h5,h6 { font-weight: 600; line-height: 1.25; margin-top: 1.5em; margin-bottom: 0.5em; }
+h1 { font-size: 2rem; border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; }
+h2 { font-size: 1.5rem; border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; }
+h3 { font-size: 1.25rem; }
+a { color: #0969da; text-decoration: none; }
+a:hover { text-decoration: underline; }
+code { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; background: rgba(175,184,193,0.2); padding: 0.2em 0.4em; border-radius: 6px; font-size: 85%; }
+pre { background: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; line-height: 1.45; }
+pre code { background: transparent; padding: 0; font-size: 100%; }
+blockquote { border-left: 0.25em solid #d0d7de; padding: 0 1em; color: #656d76; margin: 1em 0; }
+table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+th, td { border: 1px solid #d0d7de; padding: 6px 13px; text-align: left; }
+tr:nth-child(2n) { background: #f6f8fa; }
+th { background: #f6f8fa; font-weight: 600; }
+img { max-width: 100%; height: auto; }
+hr { height: 0.25em; padding: 0; margin: 24px 0; background-color: #d0d7de; border: 0; }
+ul, ol { padding-left: 2em; margin: 0.5em 0; }
+li + li { margin-top: 0.25em; }
 </style>
 </head>
-<body>${document.querySelector(".markdown-body")?.innerHTML ?? ""}</body>
+<body class="markdown-body">${renderedBody}</body>
 </html>`;
     await writeTextFile(path, html);
   }, [activeDoc]);

@@ -29,7 +29,7 @@ interface FormatButton {
 }
 
 const FORMAT_BUTTONS: FormatButton[] = [
-  { action: "heading", icon: <Heading1 size={15} />, title: "Heading", shortcut: "Ctrl+H" },
+  { action: "heading", icon: <Heading1 size={15} />, title: "Heading" },
   { action: "bold", icon: <Bold size={15} />, title: "Bold", shortcut: "Ctrl+B" },
   { action: "italic", icon: <Italic size={15} />, title: "Italic", shortcut: "Ctrl+I" },
   { action: "strikethrough", icon: <Strikethrough size={15} />, title: "Strikethrough" },
