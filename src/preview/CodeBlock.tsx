@@ -19,14 +19,21 @@ function extractText(node: unknown): string {
 
 export function CodeBlock({ children, ...props }: HTMLAttributes<HTMLPreElement>) {
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const codeChild = isValidElement(children) ? (children as ReactElement) : undefined;
   const language = extractLanguage(codeChild);
   const text = extractText(children);
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyFailed(false);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+      setCopyFailed(true);
+    }
   }
 
   return (
@@ -39,7 +46,8 @@ export function CodeBlock({ children, ...props }: HTMLAttributes<HTMLPreElement>
       <button
         type="button"
         onClick={handleCopy}
-        title={copied ? "Copied" : "Copy code"}
+        title={copyFailed ? "Clipboard unavailable" : copied ? "Copied" : "Copy code"}
+        aria-label={copyFailed ? "Copy failed" : "Copy code"}
         className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded text-[var(--text-tertiary)] opacity-0 transition-opacity hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] group-hover:opacity-100"
       >
         {copied ? <Check size={14} /> : <Copy size={14} />}
