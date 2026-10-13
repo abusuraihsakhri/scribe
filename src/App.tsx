@@ -146,7 +146,7 @@ export default function App() {
 
   const confirmDiscardIfDirty = useCallback(
     async (docId: string): Promise<boolean> => {
-      const doc = documents.find((d) => d.id === docId);
+      const doc = useDocumentsStore.getState().documents.find((d) => d.id === docId);
       if (!doc || !isDirty(doc)) return true;
 
       const choice = await new Promise<UnsavedChangesChoice>((resolve) => {
@@ -169,7 +169,7 @@ export default function App() {
       }
       return true;
     },
-    [documents, save, showError],
+    [save, showError],
   );
 
   const handleCloseDocument = useCallback(
@@ -616,6 +616,7 @@ li + li { margin-top: 0.25em; }
         <div className="min-h-0 flex-1">
           {activeDoc ? (
             <Workspace
+              key={activeDoc.id}
               viewMode={viewMode}
               content={activeDoc.content}
               onChange={handleContentChange}
