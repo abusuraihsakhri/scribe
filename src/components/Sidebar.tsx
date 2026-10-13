@@ -17,7 +17,7 @@ export function Sidebar({ documents, activeId, onSelect, onClose, onOpenRecent }
   const clearRecent = useRecentFilesStore((s) => s.clearRecent);
 
   return (
-    <div className="flex h-full w-60 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--bg-surface)]">
+    <div className="hidden h-full w-60 shrink-0 flex-col border-r md:flex border-[var(--border)] bg-[var(--bg-surface)]">
       {/* Open Documents */}
       <div className="flex flex-col">
         <div className="flex items-center justify-between px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
