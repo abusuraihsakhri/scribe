@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
 import rehypeHighlight from "rehype-highlight";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { convertFileSrc } from "@tauri-apps/api/core";
+import { convertFileSrc, isTauri } from "@tauri-apps/api/core";
 import { previewSanitizeSchema } from "../markdown/sanitizeSchema";
 import { CodeBlock } from "./CodeBlock";
 
@@ -43,7 +43,7 @@ function resolveImagePath(src: string | undefined, basePath?: string): string | 
   }
 
   // If no base path is known (e.g. unsaved untitled document), relative local file cannot be resolved safely
-  if (!basePath) return undefined;
+  if (!basePath || !isTauri()) return undefined;
 
   // Block directory traversal (both plain and URL-encoded)
   let decoded = trimmed;
@@ -74,7 +74,8 @@ function handleLinkClick(e: React.MouseEvent<HTMLAnchorElement>, href: string | 
   if (!href) return;
   e.preventDefault();
   if (isExternalHref(href)) {
-    void openUrl(href);
+    if (isTauri()) void openUrl(href);
+    else window.open(href, "_blank", "noopener,noreferrer");
   }
 }
 
