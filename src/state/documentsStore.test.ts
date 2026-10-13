@@ -27,6 +27,7 @@ describe("document persistence", () => {
     });
     useDocumentsStore.getState().updateContent(id, "first");
     const saving = useDocumentsStore.getState().save(id);
+    await Promise.resolve(); // let the queued write begin before editing again
     useDocumentsStore.getState().updateContent(id, "second");
     gate.resolve();
     expect(await saving).toBe(true);
@@ -44,6 +45,7 @@ describe("document persistence", () => {
     });
     useDocumentsStore.getState().updateContent(id, "one");
     const first = useDocumentsStore.getState().save(id);
+    await Promise.resolve(); // first write is now pending
     useDocumentsStore.getState().updateContent(id, "two");
     const second = useDocumentsStore.getState().save(id);
     expect(vi.mocked(writeFile)).toHaveBeenCalledTimes(1);
