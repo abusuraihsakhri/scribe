@@ -66,7 +66,7 @@ export function CommandPalette({ commands, onClose }: CommandPaletteProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]" onClick={onClose}>
       <div
-        className="w-[480px] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)]"
+        className="w-[min(480px,calc(100vw-1rem))] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)]"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
