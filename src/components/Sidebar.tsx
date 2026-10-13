@@ -32,6 +32,11 @@ export function Sidebar({ documents, activeId, onSelect, onClose, onOpenRecent }
               <div
                 key={doc.id}
                 onClick={() => onSelect(doc.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(doc.id); }
+                }}
                 className={[
                   "group flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[12.5px] transition-colors",
                   doc.id === activeId ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]",
