@@ -233,6 +233,7 @@ export default function App() {
 
   const handleExportHtml = useCallback(async () => {
     if (!activeDoc) return;
+    try {
     const { save: saveDialog } = await import("@tauri-apps/plugin-dialog");
     const { writeTextFile } = await import("@tauri-apps/plugin-fs");
     const { renderToStaticMarkup } = await import("react-dom/server");
@@ -302,7 +303,10 @@ li + li { margin-top: 0.25em; }
 </html>`;
     if (isTauri()) await writeTextFile(path, html);
     else downloadTextFile(html, htmlName, "text/html;charset=utf-8");
-  }, [activeDoc]);
+    } catch (err) {
+      await showError("Couldn't export HTML", err);
+    }
+  }, [activeDoc, showError]);
 
   const handleBold = useCallback(() => { if (editorRef.current) applyFormat(editorRef.current, "bold"); }, []);
   const handleItalic = useCallback(() => { if (editorRef.current) applyFormat(editorRef.current, "italic"); }, []);
