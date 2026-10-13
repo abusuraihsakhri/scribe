@@ -7,7 +7,7 @@ export interface FormatResult {
   to: number;
 }
 
-function wrapSelection(text: string, selFrom: number, selTo: number, wrapper: string): FormatResult {
+export function wrapSelection(text: string, selFrom: number, selTo: number, wrapper: string): FormatResult {
   const before = text.slice(0, selFrom);
   const selected = text.slice(selFrom, selTo);
   const after = text.slice(selTo);
@@ -38,7 +38,7 @@ function wrapSelection(text: string, selFrom: number, selTo: number, wrapper: st
   };
 }
 
-function toggleLinePrefix(text: string, selFrom: number, selTo: number, prefix: string): FormatResult {
+export function toggleLinePrefix(text: string, selFrom: number, selTo: number, prefix: string): FormatResult {
   const lines = text.split("\n");
   let charCount = 0;
   let startLine = 0;
