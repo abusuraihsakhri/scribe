@@ -1,3 +1,4 @@
+import { isTauri } from "@tauri-apps/api/core";
 import { useState } from "react";
 import { X } from "lucide-react";
 import { useSettingsStore } from "./settingsStore";
@@ -149,10 +150,11 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
 
           {activeTab === "files" && (
             <div className="flex flex-col gap-4">
-              <SettingRow label="Autosave">
+              {isTauri() ? <SettingRow label="Autosave">
                 <Toggle checked={settings.autosave} onChange={(v) => update({ autosave: v })} />
               </SettingRow>
-              {settings.autosave && (
+              : <p className="text-[12px] text-[var(--text-secondary)]">In the browser, Save downloads a Markdown file. Automatic saving to disk is unavailable.</p>}
+              {isTauri() && settings.autosave && (
                 <SettingRow label="Autosave Interval">
                   <div className="flex items-center gap-2">
                     <input

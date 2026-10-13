@@ -7,7 +7,7 @@ export interface FormatResult {
   to: number;
 }
 
-function wrapSelection(text: string, selFrom: number, selTo: number, wrapper: string): FormatResult {
+export function wrapSelection(text: string, selFrom: number, selTo: number, wrapper: string): FormatResult {
   const before = text.slice(0, selFrom);
   const selected = text.slice(selFrom, selTo);
   const after = text.slice(selTo);
@@ -38,7 +38,7 @@ function wrapSelection(text: string, selFrom: number, selTo: number, wrapper: st
   };
 }
 
-function toggleLinePrefix(text: string, selFrom: number, selTo: number, prefix: string): FormatResult {
+export function toggleLinePrefix(text: string, selFrom: number, selTo: number, prefix: string): FormatResult {
   const lines = text.split("\n");
   let charCount = 0;
   let startLine = 0;
@@ -74,13 +74,14 @@ function toggleLinePrefix(text: string, selFrom: number, selTo: number, prefix: 
   };
 }
 
-function insertAtCursor(text: string, cursor: number, before: string, after: string, placeholder: string): FormatResult {
-  const pre = text.slice(0, cursor);
-  const post = text.slice(cursor);
+/** Inserts a Markdown construct, replacing the selected span rather than duplicating it. */
+export function insertAtSelection(text: string, from: number, to: number, before: string, after: string, placeholder: string): FormatResult {
+  const pre = text.slice(0, from);
+  const post = text.slice(to);
   return {
     text: pre + before + placeholder + after + post,
-    from: cursor + before.length,
-    to: cursor + before.length + placeholder.length,
+    from: from + before.length,
+    to: from + before.length + placeholder.length,
   };
 }
 
@@ -156,10 +157,10 @@ export function applyFormat(view: EditorView, action: FormatAction) {
       break;
     }
     case "link":
-      result = insertAtCursor(text, selFrom, "[", "](url)", selected || "link text");
+      result = insertAtSelection(text, selFrom, selTo, "[", "](url)", selected || "link text");
       break;
     case "image":
-      result = insertAtCursor(text, selFrom, "![", "](image-url)", selected || "alt text");
+      result = insertAtSelection(text, selFrom, selTo, "![", "](image-url)", selected || "alt text");
       break;
     case "quote":
       result = toggleLinePrefix(text, selFrom, selTo, "> ");
@@ -209,9 +210,11 @@ export function applyFormat(view: EditorView, action: FormatAction) {
       return;
   }
 
+  // Prefix removal can move positions before the original document start.
+  const clamp = (position: number) => Math.max(0, Math.min(position, result.text.length));
   view.dispatch({
     changes: { from: 0, to: text.length, insert: result.text },
-    selection: EditorSelection.cursor(result.to),
+    selection: EditorSelection.range(clamp(result.from), clamp(result.to)),
     scrollIntoView: true,
   });
   view.focus();

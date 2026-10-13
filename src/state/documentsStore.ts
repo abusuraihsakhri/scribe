@@ -3,6 +3,23 @@ import type { EditorDocument } from "./types";
 import { isDirty } from "./types";
 import { saveFileAs, writeFile, type OpenedFile } from "../filesystem/fs";
 
+// Serialize writes per document so overlapping autosave/manual saves cannot race.
+const pendingSaves = new Map<string, Promise<void>>();
+
+async function withSaveLock<T>(id: string, operation: () => Promise<T>): Promise<T> {
+  const previous = pendingSaves.get(id) ?? Promise.resolve();
+  let release!: () => void;
+  const current = new Promise<void>((resolve) => { release = resolve; });
+  pendingSaves.set(id, current);
+  await previous;
+  try {
+    return await operation();
+  } finally {
+    release();
+    if (pendingSaves.get(id) === current) pendingSaves.delete(id);
+  }
+}
+
 let untitledCounter = 1;
 let idCounter = 1;
 const nextId = () => `doc-${idCounter++}`;
@@ -38,7 +55,30 @@ interface DocumentsState {
   reloadFromDisk: (id: string, content: string) => void;
 }
 
-export const useDocumentsStore = create<DocumentsState>((set, get) => ({
+export const useDocumentsStore = create<DocumentsState>((set, get) => {
+  async function persistDocument(id: string, saveAs: boolean): Promise<boolean> {
+    return withSaveLock(id, async () => {
+      const doc = get().documents.find((d) => d.id === id);
+      if (!doc) return false;
+      const savedSnapshot = doc.content;
+      let path = doc.path;
+      if (saveAs || !path) {
+        path = await saveFileAs(savedSnapshot, doc.path ?? `${doc.title}.md`);
+        if (!path) return false;
+      } else {
+        await writeFile(path, savedSnapshot);
+      }
+      const savedPath = path;
+      set((state) => ({
+        documents: state.documents.map((d) =>
+          d.id === id ? { ...d, path: savedPath, title: titleFromPath(savedPath), savedContent: savedSnapshot } : d,
+        ),
+      }));
+      return true;
+    });
+  }
+
+  return ({
   documents: [],
   activeId: null,
 
@@ -90,37 +130,16 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     });
   },
 
-  save: async (id) => {
-    const doc = get().documents.find((d) => d.id === id);
-    if (!doc) return false;
-    if (!doc.path) {
-      return get().saveAs(id);
-    }
-    await writeFile(doc.path, doc.content);
-    set((state) => ({
-      documents: state.documents.map((d) => (d.id === id ? { ...d, savedContent: d.content } : d)),
-    }));
-    return true;
-  },
+  save: (id) => persistDocument(id, false),
 
-  saveAs: async (id) => {
-    const doc = get().documents.find((d) => d.id === id);
-    if (!doc) return false;
-    const path = await saveFileAs(doc.content, doc.path ?? `${doc.title}.md`);
-    if (!path) return false;
-    set((state) => ({
-      documents: state.documents.map((d) =>
-        d.id === id ? { ...d, path, title: titleFromPath(path), savedContent: d.content } : d,
-      ),
-    }));
-    return true;
-  },
+  saveAs: (id) => persistDocument(id, true),
 
   reloadFromDisk: (id, content) => {
     set((state) => ({
       documents: state.documents.map((d) => (d.id === id ? { ...d, content, savedContent: content } : d)),
     }));
   },
-}));
+  });
+});
 
 export { isDirty };

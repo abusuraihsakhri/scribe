@@ -1,4 +1,5 @@
 import { FilePlus, FolderOpen, FileText, Clock } from "lucide-react";
+import { isTauri } from "@tauri-apps/api/core";
 import { useRecentFilesStore } from "../state/recentFilesStore";
 
 interface WelcomeScreenProps {
@@ -18,6 +19,11 @@ export function WelcomeScreen({ onNew, onOpen, onOpenRecent }: WelcomeScreenProp
         <p className="mt-1.5 text-[13.5px] text-[var(--text-secondary)]">
           Create a Markdown document or open an existing file.
         </p>
+        {!isTauri() && (
+          <p className="mx-auto mt-2 max-w-md px-4 text-[12px] text-[var(--text-tertiary)]">
+            Browser saves download a copy. Unsaved edits are not backed up automatically.
+          </p>
+        )}
       </div>
       <div className="flex gap-2.5">
         <button

@@ -53,7 +53,7 @@ export function FormattingToolbar({ editorRef }: FormattingToolbarProps) {
   }
 
   return (
-    <div className="flex h-9 shrink-0 items-center gap-0.5 border-b border-[var(--border)] bg-[var(--bg-surface)] px-2">
+    <div className="flex h-9 shrink-0 items-center gap-0.5 overflow-x-auto border-b border-[var(--border)] bg-[var(--bg-surface)] px-2">
       {FORMAT_BUTTONS.map((btn) => (
         <button
           key={btn.action}
@@ -61,7 +61,7 @@ export function FormattingToolbar({ editorRef }: FormattingToolbarProps) {
           title={btn.shortcut ? `${btn.title} (${btn.shortcut})` : btn.title}
           aria-label={btn.title}
           onClick={() => handleClick(btn.action)}
-          className="flex h-7 w-7 items-center justify-center rounded text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
         >
           {btn.icon}
         </button>

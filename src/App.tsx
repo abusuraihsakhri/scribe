@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { EditorView } from "@codemirror/view";
 import { undo, redo } from "@codemirror/commands";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { message } from "@tauri-apps/plugin-dialog";
 import { Toolbar } from "./components/Toolbar";
@@ -21,7 +21,7 @@ import { useDocumentsStore, isDirty } from "./state/documentsStore";
 import { useUIStore } from "./state/uiStore";
 import { useSettingsStore } from "./settings/settingsStore";
 import { useRecentFilesStore } from "./state/recentFilesStore";
-import { pickAndOpenFiles, openFileAtPath, FileOperationError } from "./filesystem/fs";
+import { pickAndOpenFiles, openFileAtPath, readBrowserFiles, downloadTextFile, FileOperationError } from "./filesystem/fs";
 import { computeTextStats } from "./utils/textStats";
 import { applyFormat } from "./editor/formatting";
 import type { ThemeMode } from "./state/types";
@@ -74,11 +74,13 @@ export default function App() {
 
   // Autosave
   useEffect(() => {
-    if (!settings.autosave || !activeId) return;
+    if (!isTauri() || !settings.autosave || !activeId) return;
     const interval = setInterval(() => {
       const doc = useDocumentsStore.getState().documents.find((d) => d.id === activeId);
       if (doc && isDirty(doc)) {
-        void useDocumentsStore.getState().save(activeId);
+        void useDocumentsStore.getState().save(activeId).catch((err) => {
+          console.error("Autosave failed:", err);
+        });
       }
     }, settings.autosaveIntervalMs);
     return () => clearInterval(interval);
@@ -86,7 +88,8 @@ export default function App() {
 
   const showError = useCallback(async (title: string, err: unknown) => {
     const detail = err instanceof FileOperationError ? err.message : "An unexpected error occurred.";
-    await message(detail, { title, kind: "error" });
+    if (isTauri()) await message(detail, { title, kind: "error" });
+    else window.alert(`${title}: ${detail}`);
   }, []);
 
   const handleNew = useCallback(() => {
@@ -98,7 +101,7 @@ export default function App() {
       const files = await pickAndOpenFiles();
       files.forEach((f) => {
         openFromDisk(f);
-        addRecent(f.path, f.name);
+        if (isTauri()) addRecent(f.path, f.name);
       });
     } catch (err) {
       await showError("Couldn't open file", err);
@@ -109,7 +112,7 @@ export default function App() {
     try {
       const file = await openFileAtPath(path);
       openFromDisk(file);
-      addRecent(file.path, file.name);
+      if (isTauri()) addRecent(file.path, file.name);
     } catch (err) {
       await showError("Couldn't open file", err);
     }
@@ -121,7 +124,7 @@ export default function App() {
       const result = await save(activeId);
       if (result) {
         const doc = useDocumentsStore.getState().documents.find((d) => d.id === activeId);
-        if (doc?.path) addRecent(doc.path, doc.title);
+        if (doc?.path && isTauri()) addRecent(doc.path, doc.title);
       }
     } catch (err) {
       await showError("Couldn't save file", err);
@@ -134,7 +137,7 @@ export default function App() {
       const result = await saveAs(activeId);
       if (result) {
         const doc = useDocumentsStore.getState().documents.find((d) => d.id === activeId);
-        if (doc?.path) addRecent(doc.path, doc.title);
+        if (doc?.path && isTauri()) addRecent(doc.path, doc.title);
       }
     } catch (err) {
       await showError("Couldn't save file", err);
@@ -143,7 +146,7 @@ export default function App() {
 
   const confirmDiscardIfDirty = useCallback(
     async (docId: string): Promise<boolean> => {
-      const doc = documents.find((d) => d.id === docId);
+      const doc = useDocumentsStore.getState().documents.find((d) => d.id === docId);
       if (!doc || !isDirty(doc)) return true;
 
       const choice = await new Promise<UnsavedChangesChoice>((resolve) => {
@@ -153,12 +156,20 @@ export default function App() {
 
       if (choice === "cancel") return false;
       if (choice === "save") {
-        const saved = await save(docId);
-        return saved;
+        try {
+          const saved = await save(docId);
+          if (!saved) return false;
+          // Edits made while the asynchronous save was in flight must remain protected.
+          const latest = useDocumentsStore.getState().documents.find((d) => d.id === docId);
+          return !latest || !isDirty(latest);
+        } catch (err) {
+          await showError("Couldn't save file", err);
+          return false;
+        }
       }
       return true;
     },
-    [documents, save],
+    [save, showError],
   );
 
   const handleCloseDocument = useCallback(
@@ -210,6 +221,11 @@ export default function App() {
   );
 
   const handleFullscreen = useCallback(async () => {
+    if (!isTauri()) {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+      return;
+    }
     const win = getCurrentWindow();
     const isFull = await win.isFullscreen();
     await win.setFullscreen(!isFull);
@@ -217,6 +233,7 @@ export default function App() {
 
   const handleExportHtml = useCallback(async () => {
     if (!activeDoc) return;
+    try {
     const { save: saveDialog } = await import("@tauri-apps/plugin-dialog");
     const { writeTextFile } = await import("@tauri-apps/plugin-fs");
     const { renderToStaticMarkup } = await import("react-dom/server");
@@ -227,10 +244,13 @@ export default function App() {
     const { default: rehypeSanitize } = await import("rehype-sanitize");
     const { previewSanitizeSchema } = await import("./markdown/sanitizeSchema");
 
-    const path = await saveDialog({
-      defaultPath: activeDoc.title.replace(/\.md$/, ".html"),
-      filters: [{ name: "HTML", extensions: ["html"] }],
-    });
+    const htmlName = activeDoc.title.replace(/\.(md|markdown|mdown|mkd)$/i, "") + ".html";
+    const path = isTauri()
+      ? await saveDialog({
+          defaultPath: htmlName,
+          filters: [{ name: "HTML", extensions: ["html"] }],
+        })
+      : htmlName;
     if (!path) return;
 
     const renderedBody = renderToStaticMarkup(
@@ -281,8 +301,12 @@ li + li { margin-top: 0.25em; }
 </head>
 <body class="markdown-body">${renderedBody}</body>
 </html>`;
-    await writeTextFile(path, html);
-  }, [activeDoc]);
+    if (isTauri()) await writeTextFile(path, html);
+    else downloadTextFile(html, htmlName, "text/html;charset=utf-8");
+    } catch (err) {
+      await showError("Couldn't export HTML", err);
+    }
+  }, [activeDoc, showError]);
 
   const handleBold = useCallback(() => { if (editorRef.current) applyFormat(editorRef.current, "bold"); }, []);
   const handleItalic = useCallback(() => { if (editorRef.current) applyFormat(editorRef.current, "italic"); }, []);
@@ -414,6 +438,7 @@ li + li { margin-top: 0.25em; }
 
   // Native drag-and-drop
   useEffect(() => {
+    if (!isTauri()) return;
     let unlisten: (() => void) | undefined;
     void getCurrentWindow()
       .onDragDropEvent(async (event) => {
@@ -435,6 +460,7 @@ li + li { margin-top: 0.25em; }
 
   // Open files passed via CLI arguments (e.g. double clicking a .md file associated with Scribe)
   useEffect(() => {
+    if (!isTauri()) return;
     const handlePaths = async (paths: string[]) => {
       for (let rawPath of paths) {
         rawPath = rawPath.trim().replace(/^["']|["']$/g, "");
@@ -483,6 +509,17 @@ li + li { margin-top: 0.25em; }
 
   // Window close guard
   useEffect(() => {
+    if (!isTauri()) {
+      const beforeUnload = (event: BeforeUnloadEvent) => {
+        if (useSettingsStore.getState().confirmBeforeClose &&
+            useDocumentsStore.getState().documents.some(isDirty)) {
+          event.preventDefault();
+          event.returnValue = "";
+        }
+      };
+      window.addEventListener("beforeunload", beforeUnload);
+      return () => window.removeEventListener("beforeunload", beforeUnload);
+    }
     let unlisten: (() => void) | undefined;
     void getCurrentWindow()
       .onCloseRequested(async (event) => {
@@ -501,12 +538,9 @@ li + li { margin-top: 0.25em; }
             await getCurrentWindow().destroy();
           }
         } catch (err) {
+          // Never close the application on a failed confirmation/save path.
+          event.preventDefault();
           console.error("Window close error:", err);
-          try {
-            await invoke("exit_app");
-          } catch {
-            await getCurrentWindow().destroy();
-          }
         }
       })
       .then((fn) => { unlisten = fn; });
@@ -516,13 +550,29 @@ li + li { margin-top: 0.25em; }
   // Window title
   useEffect(() => {
     const title = activeDoc ? `${isDirty(activeDoc) ? "● " : ""}${activeDoc.title} — Scribe` : "Scribe";
-    void getCurrentWindow().setTitle(title);
+    if (isTauri()) void getCurrentWindow().setTitle(title);
+    else document.title = title;
   }, [activeDoc]);
 
   const stats = useMemo(() => computeTextStats(activeDoc?.content ?? ""), [activeDoc?.content]);
 
+  const handleBrowserDrop = async (event: React.DragEvent<HTMLDivElement>) => {
+    if (isTauri()) return;
+    event.preventDefault();
+    try {
+      const files = await readBrowserFiles(Array.from(event.dataTransfer.files));
+      for (const file of files) openFromDisk(file);
+    } catch (err) {
+      await showError("Couldn't open file", err);
+    }
+  };
+
   return (
-    <div className="flex h-screen flex-col bg-[var(--bg-app)]">
+    <div
+      className="flex h-screen flex-col bg-[var(--bg-app)]"
+      onDragOver={(event) => { if (!isTauri() && event.dataTransfer.types.includes("Files")) event.preventDefault(); }}
+      onDrop={(event) => { void handleBrowserDrop(event); }}
+    >
       <Toolbar
         fileName={activeDoc?.title ?? null}
         isDirty={activeDoc ? isDirty(activeDoc) : false}
@@ -564,12 +614,13 @@ li + li { margin-top: 0.25em; }
             activeId={activeId}
             onSelect={(id) => useDocumentsStore.getState().setActive(id)}
             onClose={(id) => void handleCloseDocument(id)}
-            onOpenRecent={(path) => void handleOpenRecent(path)}
+            onOpenRecent={isTauri() ? (path) => void handleOpenRecent(path) : undefined}
           />
         )}
         <div className="min-h-0 flex-1">
           {activeDoc ? (
             <Workspace
+              key={activeDoc.id}
               viewMode={viewMode}
               content={activeDoc.content}
               onChange={handleContentChange}
@@ -587,7 +638,7 @@ li + li { margin-top: 0.25em; }
             <WelcomeScreen
               onNew={handleNew}
               onOpen={() => void handleOpen()}
-              onOpenRecent={(path) => void handleOpenRecent(path)}
+              onOpenRecent={isTauri() ? (path) => void handleOpenRecent(path) : undefined}
             />
           )}
         </div>

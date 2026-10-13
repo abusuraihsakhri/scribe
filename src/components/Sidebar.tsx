@@ -8,7 +8,7 @@ interface SidebarProps {
   activeId: string | null;
   onSelect: (id: string) => void;
   onClose: (id: string) => void;
-  onOpenRecent: (path: string) => void;
+  onOpenRecent?: (path: string) => void;
 }
 
 export function Sidebar({ documents, activeId, onSelect, onClose, onOpenRecent }: SidebarProps) {
@@ -17,7 +17,7 @@ export function Sidebar({ documents, activeId, onSelect, onClose, onOpenRecent }
   const clearRecent = useRecentFilesStore((s) => s.clearRecent);
 
   return (
-    <div className="flex h-full w-60 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--bg-surface)]">
+    <div className="hidden h-full w-60 shrink-0 flex-col border-r md:flex border-[var(--border)] bg-[var(--bg-surface)]">
       {/* Open Documents */}
       <div className="flex flex-col">
         <div className="flex items-center justify-between px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
@@ -32,6 +32,11 @@ export function Sidebar({ documents, activeId, onSelect, onClose, onOpenRecent }
               <div
                 key={doc.id}
                 onClick={() => onSelect(doc.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(doc.id); }
+                }}
                 className={[
                   "group flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[12.5px] transition-colors",
                   doc.id === activeId ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]",
@@ -54,8 +59,8 @@ export function Sidebar({ documents, activeId, onSelect, onClose, onOpenRecent }
         </div>
       </div>
 
-      {/* Recent Files */}
-      <div className="flex min-h-0 flex-1 flex-col border-t border-[var(--border)]">
+      {/* Recent Files are unavailable in browsers because local file handles cannot be reopened. */}
+      {onOpenRecent && <div className="flex min-h-0 flex-1 flex-col border-t border-[var(--border)]">
         <div className="flex items-center justify-between px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
           <span className="flex items-center gap-1.5">
             <Clock size={11} />
@@ -79,7 +84,7 @@ export function Sidebar({ documents, activeId, onSelect, onClose, onOpenRecent }
             recentFiles.map((file) => (
               <div
                 key={file.path}
-                onClick={() => onOpenRecent(file.path)}
+                onClick={() => onOpenRecent?.(file.path)}
                 className="group flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[12.5px] text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"
                 title={file.path}
               >
@@ -100,7 +105,7 @@ export function Sidebar({ documents, activeId, onSelect, onClose, onOpenRecent }
             ))
           )}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
