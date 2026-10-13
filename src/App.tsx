@@ -78,7 +78,9 @@ export default function App() {
     const interval = setInterval(() => {
       const doc = useDocumentsStore.getState().documents.find((d) => d.id === activeId);
       if (doc && isDirty(doc)) {
-        void useDocumentsStore.getState().save(activeId);
+        void useDocumentsStore.getState().save(activeId).catch((err) => {
+          console.error("Autosave failed:", err);
+        });
       }
     }, settings.autosaveIntervalMs);
     return () => clearInterval(interval);
@@ -153,12 +155,20 @@ export default function App() {
 
       if (choice === "cancel") return false;
       if (choice === "save") {
-        const saved = await save(docId);
-        return saved;
+        try {
+          const saved = await save(docId);
+          if (!saved) return false;
+          // Edits made while the asynchronous save was in flight must remain protected.
+          const latest = useDocumentsStore.getState().documents.find((d) => d.id === docId);
+          return !latest || !isDirty(latest);
+        } catch (err) {
+          await showError("Couldn't save file", err);
+          return false;
+        }
       }
       return true;
     },
-    [documents, save],
+    [documents, save, showError],
   );
 
   const handleCloseDocument = useCallback(
@@ -501,12 +511,9 @@ li + li { margin-top: 0.25em; }
             await getCurrentWindow().destroy();
           }
         } catch (err) {
+          // Never close the application on a failed confirmation/save path.
+          event.preventDefault();
           console.error("Window close error:", err);
-          try {
-            await invoke("exit_app");
-          } catch {
-            await getCurrentWindow().destroy();
-          }
         }
       })
       .then((fn) => { unlisten = fn; });
