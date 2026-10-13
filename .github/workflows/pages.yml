@@ -2,7 +2,7 @@ name: Deploy Web Editor
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'audit/383-scribe-reliability-web']
   workflow_dispatch:
 
 permissions:
