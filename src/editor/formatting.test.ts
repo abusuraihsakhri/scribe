@@ -1,41 +1,40 @@
 import { describe, it, expect } from "vitest";
+import { insertAtSelection, toggleLinePrefix, wrapSelection } from "./formatting";
 
-// Test the pure formatting logic patterns
-
-describe("formatting logic", () => {
-  it("bold wrapper adds ** around text", () => {
-    const text = "hello world";
-    const wrapper = "**";
-    const from = 0;
-    const to = 11;
-    const result = text.slice(0, from) + wrapper + text.slice(from, to) + wrapper + text.slice(to);
-    expect(result).toBe("**hello world**");
+describe("Markdown formatting transformations", () => {
+  it("wraps and unwraps a selection in bold markup", () => {
+    const wrapped = wrapSelection("hello world", 0, 5, "**");
+    expect(wrapped.text).toBe("**hello** world");
+    const unwrapped = wrapSelection(wrapped.text, 2, 7, "**");
+    expect(unwrapped.text).toBe("hello world");
   });
 
-  it("italic wrapper adds * around text", () => {
-    const text = "hello world";
-    const wrapper = "*";
-    const result = text.slice(0, 0) + wrapper + text.slice(0, 11) + wrapper + text.slice(11);
-    expect(result).toBe("*hello world*");
+  it("provides a selectable placeholder for an empty selection", () => {
+    const result = wrapSelection("a", 1, 1, "*");
+    expect(result.text).toBe("a*text*");
+    expect(result.text.slice(result.from, result.to)).toBe("text");
   });
 
-  it("heading prefix adds ## to line", () => {
-    const text = "My Title";
-    const result = "## " + text;
-    expect(result).toBe("## My Title");
+  it("replaces the selected text with a link instead of duplicating it", () => {
+    const result = insertAtSelection("hello world", 0, 5, "[", "](url)", "hello");
+    expect(result.text).toBe("[hello](url) world");
+    expect(result.text.slice(result.from, result.to)).toBe("hello");
   });
 
-  it("bullet list prefix adds - to lines", () => {
-    const lines = ["item 1", "item 2"];
-    const result = lines.map((l) => "- " + l).join("\n");
-    expect(result).toBe("- item 1\n- item 2");
+  it("replaces selection with an image construct", () => {
+    const result = insertAtSelection("before alt after", 7, 10, "![", "](image-url)", "alt");
+    expect(result.text).toBe("before ![alt](image-url) after");
   });
 
-  it("link insertion creates markdown link", () => {
-    const text = "hello world";
-    const from = 0;
-    const to = 11;
-    const result = text.slice(0, from) + "[" + text.slice(from, to) + "](url)" + text.slice(to);
-    expect(result).toBe("[hello world](url)");
+  it("inserts a placeholder when the selection is empty", () => {
+    const result = insertAtSelection("", 0, 0, "[", "](url)", "link text");
+    expect(result.text).toBe("[link text](url)");
+    expect(result.text.slice(result.from, result.to)).toBe("link text");
+  });
+
+  it("toggles prefixes on a line selection", () => {
+    const result = toggleLinePrefix("one\ntwo", 0, 6, "- ");
+    expect(result.text).toBe("- one\n- two");
+    expect(toggleLinePrefix(result.text, 2, 10, "- ").text).toBe("one\ntwo");
   });
 });
