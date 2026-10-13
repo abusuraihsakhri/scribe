@@ -8,7 +8,7 @@ interface SidebarProps {
   activeId: string | null;
   onSelect: (id: string) => void;
   onClose: (id: string) => void;
-  onOpenRecent: (path: string) => void;
+  onOpenRecent?: (path: string) => void;
 }
 
 export function Sidebar({ documents, activeId, onSelect, onClose, onOpenRecent }: SidebarProps) {
@@ -54,8 +54,8 @@ export function Sidebar({ documents, activeId, onSelect, onClose, onOpenRecent }
         </div>
       </div>
 
-      {/* Recent Files */}
-      <div className="flex min-h-0 flex-1 flex-col border-t border-[var(--border)]">
+      {/* Recent Files are unavailable in browsers because local file handles cannot be reopened. */}
+      {onOpenRecent && <div className="flex min-h-0 flex-1 flex-col border-t border-[var(--border)]">
         <div className="flex items-center justify-between px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
           <span className="flex items-center gap-1.5">
             <Clock size={11} />
@@ -79,7 +79,7 @@ export function Sidebar({ documents, activeId, onSelect, onClose, onOpenRecent }
             recentFiles.map((file) => (
               <div
                 key={file.path}
-                onClick={() => onOpenRecent(file.path)}
+                onClick={() => onOpenRecent?.(file.path)}
                 className="group flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[12.5px] text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"
                 title={file.path}
               >
@@ -100,7 +100,7 @@ export function Sidebar({ documents, activeId, onSelect, onClose, onOpenRecent }
             ))
           )}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
