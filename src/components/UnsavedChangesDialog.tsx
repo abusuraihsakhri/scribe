@@ -12,7 +12,7 @@ export function UnsavedChangesDialog({ fileName, onChoice }: UnsavedChangesDialo
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="unsaved-changes-title"
-        className="w-[420px] rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] p-5 shadow-[var(--shadow-elevated)]"
+        className="w-[min(420px,calc(100vw-1rem))] rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] p-5 shadow-[var(--shadow-elevated)]"
       >
         <h2 id="unsaved-changes-title" className="text-[15px] font-semibold text-[var(--text-primary)]">
           Save changes to {fileName}?
