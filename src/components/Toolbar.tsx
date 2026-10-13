@@ -96,7 +96,7 @@ export function Toolbar({
   onOpenSettings,
 }: ToolbarProps) {
   return (
-    <div className="flex h-11 shrink-0 items-center gap-0.5 border-b border-[var(--border)] bg-[var(--bg-surface)] px-2">
+    <div className="flex h-11 min-w-0 shrink-0 items-center gap-0.5 overflow-x-auto border-b border-[var(--border)] bg-[var(--bg-surface)] px-2">
       <ToolbarButton title="Toggle sidebar (Ctrl+\\)" onClick={onToggleSidebar} active={sidebarVisible}>
         <PanelLeft size={16} />
       </ToolbarButton>
@@ -121,7 +121,7 @@ export function Toolbar({
         <Redo2 size={16} />
       </ToolbarButton>
 
-      <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5 px-4 text-[13px] text-[var(--text-secondary)]">
+      <div className="flex min-w-[90px] flex-1 items-center justify-center gap-1.5 px-2 sm:px-4 text-[13px] text-[var(--text-secondary)]">
         <span className="truncate">{fileName ?? "No document open"}</span>
         {isDirty && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" title="Unsaved changes" />}
       </div>
