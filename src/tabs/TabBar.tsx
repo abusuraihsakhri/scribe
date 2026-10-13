@@ -52,7 +52,7 @@ export function TabBar({ documents, activeId, onSelect, onClose, onCloseOthers, 
 
   return (
     <div className="flex h-9 shrink-0 items-end border-b border-[var(--border)] bg-[var(--bg-app)]">
-      <div className="flex h-full min-w-0 flex-1 items-end overflow-x-auto">
+      <div role="tablist" aria-label="Open documents" className="flex h-full min-w-0 flex-1 items-end overflow-x-auto">
         {documents.map((doc) => {
           const active = doc.id === activeId;
           const dirty = isDirty(doc);
@@ -60,6 +60,12 @@ export function TabBar({ documents, activeId, onSelect, onClose, onCloseOthers, 
             <div
               key={doc.id}
               onClick={() => onSelect(doc.id)}
+              role="tab"
+              tabIndex={active ? 0 : -1}
+              aria-selected={active}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(doc.id); }
+              }}
               onContextMenu={(e) => handleContextMenu(e, doc.id)}
               className={[
                 "group flex h-full max-w-[180px] min-w-[100px] shrink-0 cursor-pointer items-center gap-1.5 border-r border-[var(--border)] px-3 text-[12.5px] transition-colors",
