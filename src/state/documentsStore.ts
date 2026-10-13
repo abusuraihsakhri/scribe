@@ -139,6 +139,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => {
       documents: state.documents.map((d) => (d.id === id ? { ...d, content, savedContent: content } : d)),
     }));
   },
-}));
+  });
+});
 
 export { isDirty };
