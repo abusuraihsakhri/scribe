@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { EditorDocument } from "./types";
 import { isDirty } from "./types";
 import { saveFileAs, writeFile, type OpenedFile } from "../filesystem/fs";
+import { applyLineEnding } from "../utils/lineEndings";
 
 let untitledCounter = 1;
 let idCounter = 1;
@@ -19,6 +20,7 @@ function makeUntitledDocument(): EditorDocument {
     title: `Untitled-${untitledCounter++}`,
     content: "",
     savedContent: "",
+    lineEnding: "lf",
   };
 }
 
@@ -34,6 +36,8 @@ interface DocumentsState {
   closeDocument: (id: string) => void;
   save: (id: string) => Promise<boolean>;
   saveAs: (id: string) => Promise<boolean>;
+  /** Saves every modified document that already has a file. Untitled documents are skipped so autosave never opens a dialog. */
+  autosaveAll: () => Promise<void>;
   /** Reloads a document's content from an externally-modified file on disk. */
   reloadFromDisk: (id: string, content: string) => void;
 }
@@ -65,6 +69,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       title: file.name,
       content: file.content,
       savedContent: file.content,
+      lineEnding: file.lineEnding,
     };
     set((state) => ({ documents: [...state.documents, doc], activeId: doc.id }));
     return doc.id;
@@ -96,7 +101,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     if (!doc.path) {
       return get().saveAs(id);
     }
-    await writeFile(doc.path, doc.content);
+    await writeFile(doc.path, applyLineEnding(doc.content, doc.lineEnding));
     set((state) => ({
       documents: state.documents.map((d) => (d.id === id ? { ...d, savedContent: d.content } : d)),
     }));
@@ -106,7 +111,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
   saveAs: async (id) => {
     const doc = get().documents.find((d) => d.id === id);
     if (!doc) return false;
-    const path = await saveFileAs(doc.content, doc.path ?? `${doc.title}.md`);
+    const path = await saveFileAs(applyLineEnding(doc.content, doc.lineEnding), doc.path ?? `${doc.title}.md`);
     if (!path) return false;
     set((state) => ({
       documents: state.documents.map((d) =>
@@ -114,6 +119,18 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       ),
     }));
     return true;
+  },
+
+  autosaveAll: async () => {
+    const pending = get().documents.filter((d) => d.path && isDirty(d));
+    for (const doc of pending) {
+      try {
+        await get().save(doc.id);
+      } catch (err) {
+        // The document stays dirty, so its unsaved marker remains visible in the tab.
+        console.error(`Autosave failed for ${doc.path}:`, err);
+      }
+    }
   },
 
   reloadFromDisk: (id, content) => {

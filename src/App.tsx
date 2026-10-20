@@ -24,6 +24,7 @@ import { useRecentFilesStore } from "./state/recentFilesStore";
 import { pickAndOpenFiles, openFileAtPath, FileOperationError } from "./filesystem/fs";
 import { computeTextStats } from "./utils/textStats";
 import { applyFormat } from "./editor/formatting";
+import { retainEditorStates } from "./editor/CodeEditor";
 import type { ThemeMode } from "./state/types";
 
 const THEME_CYCLE: ThemeMode[] = ["light", "dark", "system"];
@@ -67,6 +68,11 @@ export default function App() {
     }
   }, [settings.theme, theme, setTheme]);
 
+  // Forget editor undo history for closed documents
+  useEffect(() => {
+    retainEditorStates(new Set(documents.map((d) => d.id)));
+  }, [documents]);
+
   // Apply zoom
   useEffect(() => {
     document.documentElement.style.fontSize = `${zoom}%`;
@@ -74,15 +80,12 @@ export default function App() {
 
   // Autosave
   useEffect(() => {
-    if (!settings.autosave || !activeId) return;
+    if (!settings.autosave) return;
     const interval = setInterval(() => {
-      const doc = useDocumentsStore.getState().documents.find((d) => d.id === activeId);
-      if (doc && isDirty(doc)) {
-        void useDocumentsStore.getState().save(activeId);
-      }
+      void useDocumentsStore.getState().autosaveAll();
     }, settings.autosaveIntervalMs);
     return () => clearInterval(interval);
-  }, [settings.autosave, settings.autosaveIntervalMs, activeId]);
+  }, [settings.autosave, settings.autosaveIntervalMs]);
 
   const showError = useCallback(async (title: string, err: unknown) => {
     const detail = err instanceof FileOperationError ? err.message : "An unexpected error occurred.";
@@ -571,6 +574,7 @@ li + li { margin-top: 0.25em; }
           {activeDoc ? (
             <Workspace
               viewMode={viewMode}
+              docId={activeDoc.id}
               content={activeDoc.content}
               onChange={handleContentChange}
               editorRef={editorRef}
@@ -598,7 +602,7 @@ li + li { margin-top: 0.25em; }
         characters={stats.characters}
         line={cursor.line}
         column={cursor.column}
-        content={activeDoc?.content}
+        lineEnding={activeDoc?.lineEnding}
       />
 
       {pendingClose && (

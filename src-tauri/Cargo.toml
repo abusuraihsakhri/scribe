@@ -1,6 +1,6 @@
 [package]
 name = "scribe"
-version = "0.1.2"
+version = "0.1.3"
 description = "A fast, native Markdown editor and viewer for Windows"
 authors = ["Scribe"]
 edition = "2021"
