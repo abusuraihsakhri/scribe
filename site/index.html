@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scribe: a small, native Markdown editor</title>
+<meta name="description" content="Scribe is a desktop Markdown editor for Windows, macOS and Linux with a live preview, tabs, find and replace, and a command palette. The Windows installer is under 3 MB.">
+<meta property="og:title" content="Scribe: a small, native Markdown editor">
+<meta property="og:description" content="Write Markdown with a live preview, tabs, find and replace, and a command palette. Windows, macOS and Linux.">
+<meta property="og:image" content="https://abusuraihsakhri.github.io/scribe/screenshots/split-light.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f6f8fa;
+    --text: #1f2328;
+    --text-2: #59636e;
+    --border: #d8dee4;
+    --accent: #0078d4;
+    --accent-text: #ffffff;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1b1f;
+      --bg-soft: #232328;
+      --text: #e6e6e9;
+      --text-2: #a1a1aa;
+      --border: #34343b;
+      --accent: #3b9eff;
+      --accent-text: #0b0b0d;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  header.top { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 18px; color: var(--text); text-decoration: none; }
+  .brand img { width: 28px; height: 28px; }
+  nav a { color: var(--text-2); text-decoration: none; margin-left: 20px; font-size: 15px; }
+  nav a:hover { color: var(--text); }
+
+  .hero { text-align: center; padding: 48px 0 32px; }
+  .hero h1 { font-size: clamp(32px, 5vw, 48px); line-height: 1.15; margin: 0 0 16px; letter-spacing: -0.02em; text-wrap: balance; }
+  .hero p { font-size: 19px; color: var(--text-2); max-width: 640px; margin: 0 auto 28px; text-wrap: pretty; }
+  .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 11px 20px; border-radius: 8px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); color: var(--text); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .meta { margin-top: 14px; font-size: 14px; color: var(--text-2); }
+
+  .shot { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 30px rgb(0 0 0 / 0.12); }
+  .hero-shot { margin: 8px auto 0; }
+
+  section { padding: 64px 0 0; }
+  h2 { font-size: 28px; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .lead { color: var(--text-2); margin: 0 0 32px; max-width: 680px; }
+
+  .features { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 28px 36px; }
+  .features h3 { font-size: 17px; margin: 0 0 6px; }
+  .features p { margin: 0; color: var(--text-2); font-size: 15px; }
+
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .pair figure { margin: 0; }
+  .pair figcaption { margin-top: 10px; font-size: 15px; color: var(--text-2); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-weight: 600; color: var(--text-2); font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; }
+  kbd { font: 13px/1 ui-monospace, "Cascadia Code", Consolas, monospace; padding: 3px 6px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; background: var(--bg-soft); white-space: nowrap; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; }
+
+  .news { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 24px 28px; }
+  .news h2 { font-size: 22px; }
+  .news ul { margin: 12px 0 0; padding-left: 20px; }
+  .news li { margin: 6px 0; }
+
+  footer { margin: 80px 0 0; padding: 28px 0 40px; border-top: 1px solid var(--border); color: var(--text-2); font-size: 14px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  footer a { color: var(--text-2); }
+
+  @media (max-width: 760px) {
+    nav a:not(:last-child) { display: none; }
+    .pair, .cols { grid-template-columns: 1fr; }
+    .hero { padding-top: 24px; }
+    .hero p { font-size: 17px; }
+    td, th { padding: 8px 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./"><img src="favicon.svg" alt="">Scribe</a>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#shortcuts">Shortcuts</a>
+      <a href="#download">Download</a>
+      <a href="https://github.com/abusuraihsakhri/scribe">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <h1>A small, native Markdown editor</h1>
+    <p>Write on the left, read the result on the right. Scribe opens your <code>.md</code> files straight from Explorer or Finder, keeps them in tabs, and saves them with their original line endings.</p>
+    <div class="actions">
+      <a class="btn primary" id="download-primary" href="https://github.com/abusuraihsakhri/scribe/releases/latest">Download Scribe</a>
+      <a class="btn" href="https://github.com/abusuraihsakhri/scribe">View source</a>
+    </div>
+    <div class="meta" id="release-meta">Free, for Windows, macOS and Linux.</div>
+  </div>
+
+  <picture>
+    <source srcset="screenshots/split-dark.png" media="(prefers-color-scheme: dark)">
+    <img class="shot hero-shot" src="screenshots/split-light.png" width="1280" height="760" alt="Scribe in split view: Markdown source with line numbers on the left, the rendered document with a task list and table on the right.">
+  </picture>
+
+  <section id="features">
+    <h2>What it does</h2>
+    <p class="lead">Scribe is built with Tauri, so it uses your system's web view instead of shipping its own browser. The Windows installer is 2.9 MB.</p>
+    <div class="features">
+      <div>
+        <h3>Editor, split or preview</h3>
+        <p>Switch layouts with <kbd>Ctrl</kbd> <kbd>1</kbd>, <kbd>2</kbd> and <kbd>3</kbd>. In split view you can drag the divider, and the preview updates as you type.</p>
+      </div>
+      <div>
+        <h3>GitHub-flavored Markdown</h3>
+        <p>Tables, task lists and strikethrough render as they do on GitHub. Code blocks get syntax highlighting and a copy button.</p>
+      </div>
+      <div>
+        <h3>Tabs that keep their place</h3>
+        <p>Open as many files as you like. Each tab has its own undo history, cursor and scroll position, and shows a dot when it has unsaved changes.</p>
+      </div>
+      <div>
+        <h3>Command palette</h3>
+        <p><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>P</kbd> lists every command with its shortcut. Type a few letters to filter.</p>
+      </div>
+      <div>
+        <h3>Find and replace</h3>
+        <p>Search with match case, whole word or regular expressions, step through matches, and replace one or all.</p>
+      </div>
+      <div>
+        <h3>Formatting toolbar</h3>
+        <p>Headings, bold, italic, strikethrough, inline code, code blocks, links, images, quotes, lists, checklists, tables and horizontal rules, one click each.</p>
+      </div>
+      <div>
+        <h3>Lists that continue themselves</h3>
+        <p>Press Enter in a bullet, numbered or checklist item and the next one starts for you. Enter on an empty item ends the list. <kbd>Tab</kbd> and <kbd>Shift</kbd> <kbd>Tab</kbd> change the indent.</p>
+      </div>
+      <div>
+        <h3>Your files stay as they were</h3>
+        <p>Scribe remembers whether a file uses Windows (CRLF) or Unix (LF) line endings and saves it the same way, so git doesn't see changes you didn't make.</p>
+      </div>
+      <div>
+        <h3>Safe to open anything</h3>
+        <p>The preview strips scripts and event handlers from Markdown, and blocks local image paths that point outside the file's folder.</p>
+      </div>
+      <div>
+        <h3>Opens from your file manager</h3>
+        <p>Double-click a <code>.md</code>, <code>.markdown</code>, <code>.mdown</code> or <code>.mkd</code> file, or drag files onto the window. A second file opens in the running window instead of a new one.</p>
+      </div>
+      <div>
+        <h3>Light, dark or system theme</h3>
+        <p>Follows your system setting by default. Zoom the whole window with <kbd>Ctrl</kbd> <kbd>=</kbd> and <kbd>Ctrl</kbd> <kbd>-</kbd>, or go fullscreen with <kbd>F11</kbd>.</p>
+      </div>
+      <div>
+        <h3>Settings you'd expect</h3>
+        <p>Font, font size, tab size, word wrap, line numbers, current-line highlight, optional autosave, a list of recent files, and export to a standalone HTML page.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="pair">
+      <figure>
+        <img class="shot" src="screenshots/command-palette.png" width="1280" height="760" loading="lazy" alt="The command palette open over the editor, filtered to view commands, with Split View and Preview Mode listed with their shortcuts.">
+        <figcaption>The command palette, filtered to "view".</figcaption>
+      </figure>
+      <figure>
+        <img class="shot" src="screenshots/find-replace.png" width="1280" height="760" loading="lazy" alt="The find and replace bar above the editor, searching for Ready and showing 1 of 3 matches, with options for case, whole word and regular expressions.">
+        <figcaption>Find and replace, with case, whole-word and regex options.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="shortcuts">
+    <h2>Keyboard shortcuts</h2>
+    <p class="lead">On macOS, use <kbd>Cmd</kbd> where this list says <kbd>Ctrl</kbd>.</p>
+    <div class="cols">
+      <table>
+        <tr><th>Keys</th><th>Action</th></tr>
+        <tr><td><kbd>Ctrl</kbd> <kbd>N</kbd></td><td>New document</td></tr>
+        <tr><td><kbd>Ctrl</kbd> <kbd>O</kbd></td><td>Open files</td></tr>
+        <tr><td><kbd>Ctrl</kbd> <kbd>S</kbd></td><td>Save</td></tr>
+        <tr><td><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>S</kbd></td><td>Save as</td></tr>
+        <tr><td><kbd>Ctrl</kbd> <kbd>W</kbd></td><td>Close tab</td></tr>
+        <tr><td><kbd>Ctrl</kbd> <kbd>Z</kbd> / <kbd>Ctrl</kbd> <kbd>Y</kbd></td><td>Undo / redo</td></tr>
+        <tr><td><kbd>Ctrl</kbd> <kbd>B</kbd></td><td>Bold</td></tr>
+        <tr><td><kbd>Ctrl</kbd> <kbd>I</kbd></td><td>Italic</td></tr>
+        <tr><td><kbd>Ctrl</kbd> <kbd>K</kbd></td><td>Insert link</td></tr>
+      </table>
+      <table>
+        <tr><th>Keys</th><th>Action</th></tr>
+        <tr><td><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>P</kbd></td><td>Command palette</td></tr>
+        <tr><td><kbd>Ctrl</kbd> <kbd>F</kbd> / <kbd>Ctrl</kbd> <kbd>H</kbd></td><td>Find / find and replace</td></tr>
+        <tr><td><kbd>Ctrl</kbd> <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td><td>Editor, split, preview</td></tr>
+        <tr><td><kbd>Ctrl</kbd> <kbd>\</kbd></td><td>Show or hide sidebar</td></tr>
+        <tr><td><kbd>Ctrl</kbd> <kbd>=</kbd> / <kbd>Ctrl</kbd> <kbd>-</kbd></td><td>Zoom in / out</td></tr>
+        <tr><td><kbd>Ctrl</kbd> <kbd>0</kbd></td><td>Reset zoom</td></tr>
+        <tr><td><kbd>F11</kbd></td><td>Fullscreen</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section id="download">
+    <h2>Download</h2>
+    <p class="lead" id="download-lead">Installers for every platform are on the <a href="https://github.com/abusuraihsakhri/scribe/releases/latest">latest release</a> page.</p>
+    <table id="downloads">
+      <tr><th>Platform</th><th>File</th></tr>
+      <tr><td>Windows</td><td><a href="https://github.com/abusuraihsakhri/scribe/releases/latest">Installer (.exe) or .msi</a></td></tr>
+      <tr><td>macOS (Apple silicon and Intel)</td><td><a href="https://github.com/abusuraihsakhri/scribe/releases/latest">.dmg</a></td></tr>
+      <tr><td>Linux</td><td><a href="https://github.com/abusuraihsakhri/scribe/releases/latest">.AppImage, .deb or .rpm</a></td></tr>
+    </table>
+    <p class="lead" style="margin-top:20px">The builds aren't code-signed yet, so Windows SmartScreen and macOS Gatekeeper will ask you to confirm the first time you open Scribe.</p>
+  </section>
+
+  <section>
+    <div class="news">
+      <h2>New in 0.1.3</h2>
+      <ul>
+        <li>Undo no longer moves text from one tab into another.</li>
+        <li>Files with Windows line endings no longer show as modified when you haven't changed them, and are saved with their original line endings.</li>
+        <li>Autosave no longer opens a Save As dialog for new, unsaved documents.</li>
+      </ul>
+      <p style="margin:12px 0 0"><a href="https://github.com/abusuraihsakhri/scribe/blob/main/CHANGELOG.md">Full changelog</a></p>
+    </div>
+  </section>
+
+  <footer>
+    <span>Scribe is built with Tauri 2, React and CodeMirror 6.</span>
+    <span><a href="https://github.com/abusuraihsakhri/scribe">Source</a> · <a href="https://github.com/abusuraihsakhri/scribe/issues">Report an issue</a></span>
+  </footer>
+</div>
+
+<script>
+  // Fill in direct download links from the latest GitHub release. The static links above remain if this fails.
+  (async () => {
+    try {
+      const res = await fetch("https://api.github.com/repos/abusuraihsakhri/scribe/releases/latest");
+      if (!res.ok) return;
+      const release = await res.json();
+      const assets = release.assets || [];
+      const find = (re) => assets.find((a) => re.test(a.name));
+      const link = (asset, label) => asset ? `<a href="${asset.browser_download_url}">${label}</a> <span style="color:var(--text-2)">(${(asset.size / 1048576).toFixed(1)} MB)</span>` : "";
+      const join = (...parts) => parts.filter(Boolean).join(" · ");
+
+      const exe = find(/x64-setup\.exe$/), msi = find(/\.msi$/), dmg = find(/\.dmg$/);
+      const appimage = find(/\.AppImage$/), deb = find(/\.deb$/), rpm = find(/\.rpm$/);
+      const rows = [
+        ["Windows", join(link(exe, "Installer (.exe)"), link(msi, ".msi"))],
+        ["macOS (Apple silicon and Intel)", link(dmg, ".dmg")],
+        ["Linux", join(link(appimage, ".AppImage"), link(deb, ".deb"), link(rpm, ".rpm"))],
+      ];
+      const table = document.getElementById("downloads");
+      table.innerHTML = "<tr><th>Platform</th><th>File</th></tr>" + rows
+        .map(([platform, cell]) => `<tr><td>${platform}</td><td>${cell || `<a href="${release.html_url}">See release page</a>`}</td></tr>`)
+        .join("");
+
+      const version = release.tag_name;
+      document.getElementById("download-lead").innerHTML = `Version ${version.replace(/^v/, "")}. All files are also on the <a href="${release.html_url}">release page</a>.`;
+      document.getElementById("release-meta").textContent = `Version ${version.replace(/^v/, "")}. Free, for Windows, macOS and Linux.`;
+
+      const isWindows = /Windows/i.test(navigator.userAgent), isMac = /Mac OS X|Macintosh/i.test(navigator.userAgent);
+      const primary = isWindows ? exe : isMac ? dmg : null;
+      if (primary) {
+        const button = document.getElementById("download-primary");
+        button.href = primary.browser_download_url;
+        button.textContent = `Download for ${isWindows ? "Windows" : "macOS"}`;
+      }
+    } catch {
+      // Keep the static links.
+    }
+  })();
+</script>
+</body>
+</html>
