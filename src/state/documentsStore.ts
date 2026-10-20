@@ -36,6 +36,8 @@ interface DocumentsState {
   closeDocument: (id: string) => void;
   save: (id: string) => Promise<boolean>;
   saveAs: (id: string) => Promise<boolean>;
+  /** Saves every modified document that already has a file. Untitled documents are skipped so autosave never opens a dialog. */
+  autosaveAll: () => Promise<void>;
   /** Reloads a document's content from an externally-modified file on disk. */
   reloadFromDisk: (id: string, content: string) => void;
 }
@@ -117,6 +119,18 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       ),
     }));
     return true;
+  },
+
+  autosaveAll: async () => {
+    const pending = get().documents.filter((d) => d.path && isDirty(d));
+    for (const doc of pending) {
+      try {
+        await get().save(doc.id);
+      } catch (err) {
+        // The document stays dirty, so its unsaved marker remains visible in the tab.
+        console.error(`Autosave failed for ${doc.path}:`, err);
+      }
+    }
   },
 
   reloadFromDisk: (id, content) => {

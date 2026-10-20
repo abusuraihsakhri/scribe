@@ -80,15 +80,12 @@ export default function App() {
 
   // Autosave
   useEffect(() => {
-    if (!settings.autosave || !activeId) return;
+    if (!settings.autosave) return;
     const interval = setInterval(() => {
-      const doc = useDocumentsStore.getState().documents.find((d) => d.id === activeId);
-      if (doc && isDirty(doc)) {
-        void useDocumentsStore.getState().save(activeId);
-      }
+      void useDocumentsStore.getState().autosaveAll();
     }, settings.autosaveIntervalMs);
     return () => clearInterval(interval);
-  }, [settings.autosave, settings.autosaveIntervalMs, activeId]);
+  }, [settings.autosave, settings.autosaveIntervalMs]);
 
   const showError = useCallback(async (title: string, err: unknown) => {
     const detail = err instanceof FileOperationError ? err.message : "An unexpected error occurred.";
