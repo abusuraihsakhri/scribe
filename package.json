@@ -3,7 +3,7 @@
   "description": "A fast, native Markdown editor and viewer built with Tauri 2, React 19, and CodeMirror 6.",
   "author": "abusuraihsakhri",
   "private": true,
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
