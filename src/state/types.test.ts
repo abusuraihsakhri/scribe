@@ -8,6 +8,7 @@ function makeDoc(overrides: Partial<EditorDocument> = {}): EditorDocument {
     title: "file.md",
     content: "hello",
     savedContent: "hello",
+    lineEnding: "lf",
     ...overrides,
   };
 }

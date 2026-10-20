@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { EditorDocument } from "./types";
 import { isDirty } from "./types";
 import { saveFileAs, writeFile, type OpenedFile } from "../filesystem/fs";
+import { applyLineEnding } from "../utils/lineEndings";
 
 let untitledCounter = 1;
 let idCounter = 1;
@@ -19,6 +20,7 @@ function makeUntitledDocument(): EditorDocument {
     title: `Untitled-${untitledCounter++}`,
     content: "",
     savedContent: "",
+    lineEnding: "lf",
   };
 }
 
@@ -65,6 +67,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       title: file.name,
       content: file.content,
       savedContent: file.content,
+      lineEnding: file.lineEnding,
     };
     set((state) => ({ documents: [...state.documents, doc], activeId: doc.id }));
     return doc.id;
@@ -96,7 +99,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     if (!doc.path) {
       return get().saveAs(id);
     }
-    await writeFile(doc.path, doc.content);
+    await writeFile(doc.path, applyLineEnding(doc.content, doc.lineEnding));
     set((state) => ({
       documents: state.documents.map((d) => (d.id === id ? { ...d, savedContent: d.content } : d)),
     }));
@@ -106,7 +109,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
   saveAs: async (id) => {
     const doc = get().documents.find((d) => d.id === id);
     if (!doc) return false;
-    const path = await saveFileAs(doc.content, doc.path ?? `${doc.title}.md`);
+    const path = await saveFileAs(applyLineEnding(doc.content, doc.lineEnding), doc.path ?? `${doc.title}.md`);
     if (!path) return false;
     set((state) => ({
       documents: state.documents.map((d) =>

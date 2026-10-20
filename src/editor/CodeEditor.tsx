@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { EditorState, type Extension, Compartment } from "@codemirror/state";
+import { EditorState, StateEffect, type Extension, Compartment } from "@codemirror/state";
 import {
   EditorView,
   keymap,
@@ -21,6 +21,8 @@ import { smartEditingKeymap } from "./smartEditing";
 import { applyFormat } from "./formatting";
 
 interface CodeEditorProps {
+  /** Identifies the open document; each one keeps its own undo history, selection, and scroll. */
+  docId: string;
   value: string;
   onChange: (value: string) => void;
   editorRef?: React.MutableRefObject<EditorView | null>;
@@ -33,9 +35,26 @@ interface CodeEditorProps {
   tabSize?: number;
 }
 
-export function CodeEditor({ value, onChange, editorRef, onCursorInfo, fontSize, fontFamily, wordWrap, showLineNumbers = true, highlightCurrentLine = true, tabSize = 2 }: CodeEditorProps) {
+interface SavedEditorState {
+  state: EditorState;
+  scroll: StateEffect<unknown>;
+}
+
+// The editor view is shared by all tabs. Swapping in each document's own EditorState, rather than
+// replacing the text in place, keeps undo history from leaking between documents.
+const savedStates = new Map<string, SavedEditorState>();
+
+/** Drops saved editor state for documents that are no longer open. */
+export function retainEditorStates(openIds: Set<string>) {
+  for (const id of savedStates.keys()) {
+    if (!openIds.has(id)) savedStates.delete(id);
+  }
+}
+
+export function CodeEditor({ docId, value, onChange, editorRef, onCursorInfo, fontSize, fontFamily, wordWrap, showLineNumbers = true, highlightCurrentLine = true, tabSize = 2 }: CodeEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const docIdRef = useRef(docId);
   const onChangeRef = useRef(onChange);
   const onCursorInfoRef = useRef(onCursorInfo);
   onChangeRef.current = onChange;
@@ -49,10 +68,8 @@ export function CodeEditor({ value, onChange, editorRef, onCursorInfo, fontSize,
   const activeLineCompartment = useRef(new Compartment());
   const tabSizeCompartment = useRef(new Compartment());
 
-  useEffect(() => {
-    if (!hostRef.current) return;
-
-    const extensions: Extension[] = [
+  function buildExtensions(): Extension[] {
+    return [
       lineNumbersCompartment.current.of(showLineNumbers ? lineNumbers() : []),
       activeLineCompartment.current.of(highlightCurrentLine ? [highlightActiveLine(), highlightActiveLineGutter()] : []),
       history(),
@@ -81,19 +98,45 @@ export function CodeEditor({ value, onChange, editorRef, onCursorInfo, fontSize,
           onChangeRef.current(update.state.doc.toString());
         }
         if (update.docChanged || update.selectionSet) {
-          const pos = update.state.selection.main.head;
-          const line = update.state.doc.lineAt(pos);
-          onCursorInfoRef.current?.({ line: line.number, column: pos - line.from + 1 });
+          reportCursor(update.state);
         }
       }),
     ];
+  }
 
-    const state = EditorState.create({ doc: value, extensions });
-    const view = new EditorView({ state, parent: hostRef.current });
+  function reportCursor(state: EditorState) {
+    const pos = state.selection.main.head;
+    const line = state.doc.lineAt(pos);
+    onCursorInfoRef.current?.({ line: line.number, column: pos - line.from + 1 });
+  }
+
+  function loadState(view: EditorView, id: string) {
+    const saved = savedStates.get(id);
+    if (saved) {
+      view.setState(saved.state);
+      // The saved state still holds the extensions (callbacks, settings) from when it was saved,
+      // possibly from an earlier mount. Reinstall current ones; the undo history is kept.
+      view.dispatch({ effects: [StateEffect.reconfigure.of(buildExtensions()), saved.scroll] });
+    } else {
+      view.setState(EditorState.create({ doc: value, extensions: buildExtensions() }));
+    }
+    reportCursor(view.state);
+  }
+
+  function saveState(view: EditorView) {
+    savedStates.set(docIdRef.current, { state: view.state, scroll: view.scrollSnapshot() });
+  }
+
+  useEffect(() => {
+    if (!hostRef.current) return;
+
+    const view = new EditorView({ parent: hostRef.current });
     viewRef.current = view;
     if (editorRef) editorRef.current = view;
+    loadState(view, docId);
 
     return () => {
+      saveState(view);
       view.destroy();
       viewRef.current = null;
       if (editorRef) editorRef.current = null;
@@ -101,6 +144,16 @@ export function CodeEditor({ value, onChange, editorRef, onCursorInfo, fontSize,
     // Extensions are created once per mount; settings changes are applied via compartments below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Switch to the newly active document's state
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view || docIdRef.current === docId) return;
+    saveState(view);
+    docIdRef.current = docId;
+    loadState(view, docId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [docId]);
 
   // Sync document content on external changes
   useEffect(() => {

@@ -7,6 +7,7 @@ import type { ViewMode } from "../state/types";
 
 interface WorkspaceProps {
   viewMode: ViewMode;
+  docId: string;
   content: string;
   onChange: (value: string) => void;
   editorRef: React.MutableRefObject<EditorView | null>;
@@ -22,7 +23,7 @@ interface WorkspaceProps {
 
 const PREVIEW_DEBOUNCE_MS = 150;
 
-export function Workspace({ viewMode, content, onChange, editorRef, onCursorInfo, editorFontSize, editorFontFamily, editorWordWrap, editorLineNumbers, editorHighlightLine, editorTabSize, docPath }: WorkspaceProps) {
+export function Workspace({ viewMode, docId, content, onChange, editorRef, onCursorInfo, editorFontSize, editorFontFamily, editorWordWrap, editorLineNumbers, editorHighlightLine, editorTabSize, docPath }: WorkspaceProps) {
   const debouncedContent = useDebouncedValue(content, PREVIEW_DEBOUNCE_MS);
   const [splitRatio, setSplitRatio] = useState(0.5);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -50,6 +51,7 @@ export function Workspace({ viewMode, content, onChange, editorRef, onCursorInfo
   const editorPane = (
     <div className="h-full min-w-0" style={{ background: "var(--editor-bg)" }}>
       <CodeEditor
+        docId={docId}
         value={content}
         onChange={onChange}
         editorRef={editorRef}

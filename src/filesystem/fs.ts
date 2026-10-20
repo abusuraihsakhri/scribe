@@ -1,5 +1,7 @@
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import type { LineEnding } from "../state/types";
+import { detectLineEnding, normalizeLineEndings } from "../utils/lineEndings";
 
 const MARKDOWN_EXTENSIONS = ["md", "markdown", "mdown", "mkd"];
 
@@ -37,7 +39,9 @@ export function toUserMessage(error: unknown): string {
 export interface OpenedFile {
   path: string;
   name: string;
+  /** Normalized to "\n" line endings. */
   content: string;
+  lineEnding: LineEnding;
 }
 
 /** Opens multiple Markdown files at once (used for drag-and-drop). */
@@ -57,8 +61,13 @@ export async function pickAndOpenFiles(): Promise<OpenedFile[]> {
 
 export async function openFileAtPath(path: string): Promise<OpenedFile> {
   try {
-    const content = await readTextFile(path);
-    return { path, name: fileNameFromPath(path), content };
+    const raw = await readTextFile(path);
+    return {
+      path,
+      name: fileNameFromPath(path),
+      content: normalizeLineEndings(raw),
+      lineEnding: detectLineEnding(raw),
+    };
   } catch (error) {
     throw new FileOperationError(toUserMessage(error), error);
   }
