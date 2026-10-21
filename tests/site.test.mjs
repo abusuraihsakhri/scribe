@@ -88,7 +88,7 @@ test("page has semantic landmarks and accessible mobile navigation", () => {
   assert.match(page, /href="#main"/);
   assert.match(page, /<h1>/);
   assert.match(page, /aria-label="Mobile navigation"/);
-  assert.match(page, /\.mobile-menu nav a \{ display: block;/);
+  assert.match(page, /\.mobile-menu nav a\s*\{\s*display:\s*block\s*;/);
   assert.match(page, /prefers-reduced-motion/);
   assert.match(page, /prefers-color-scheme: dark/);
   assert.equal((page.match(/<script>/g) || []).length, 1);
