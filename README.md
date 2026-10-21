@@ -1,5 +1,10 @@
 # Scribe — Native Markdown Editor & Viewer
 
+### [Open the Project Website & Downloads →](https://abusuraihsakhri.github.io/scribe/)
+
+The GitHub Pages site includes screenshots, features, shortcuts, and links to published desktop installers. **Scribe is a native Tauri application; the GitHub Pages site is not an online Markdown editor.** Documents opened in the application are stored locally; remote images embedded in Markdown may be fetched from their original hosts.
+
+
 <p align="center">
   <img src="src-tauri/icons/128x128@2x.png" alt="Scribe Logo" width="108" height="108" />
 </p>

@@ -3,8 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f9fc">
+<meta property="og:url" content="https://abusuraihsakhri.github.io/scribe/">
+<link rel="canonical" href="https://abusuraihsakhri.github.io/scribe/">
 <title>Scribe: a small, native Markdown editor</title>
-<meta name="description" content="Scribe is a desktop Markdown editor for Windows, macOS and Linux with a live preview, tabs, find and replace, and a command palette. The Windows installer is under 3 MB.">
+<meta name="description" content="Scribe is a lightweight, native Markdown editor for Windows, macOS and Linux. Edit, preview, search and organize local Markdown files without a cloud account.">
 <meta property="og:title" content="Scribe: a small, native Markdown editor">
 <meta property="og:description" content="Write Markdown with a live preview, tabs, find and replace, and a command palette. Windows, macOS and Linux.">
 <meta property="og:image" content="https://abusuraihsakhri.github.io/scribe/screenshots/split-light.png">
@@ -93,38 +96,179 @@
     .hero p { font-size: 17px; }
     td, th { padding: 8px 6px; }
   }
+
+  /* Product-site refresh: no external CSS or font dependencies. */
+  :root {
+    --bg: #f8faff;
+    --bg-soft: #f0f4fc;
+    --surface: #fff;
+    --text: #15223b;
+    --text-2: #52617a;
+    --border: #dce4f1;
+    --accent: #244dc5;
+    --accent-text: #fff;
+    --focus: #e5892f;
+    --shadow: 0 18px 44px rgb(25 53 104 / .09);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1424;
+      --bg-soft: #151e31;
+      --surface: #161f32;
+      --text: #eff4ff;
+      --text-2: #b9c6dd;
+      --border: #2e3a50;
+      --accent: #8facff;
+      --accent-text: #0b1428;
+      --focus: #ffc479;
+      --shadow: 0 18px 44px rgb(0 0 0 / .25);
+      color-scheme: dark;
+    }
+  }
+  html { scroll-behavior: smooth; scroll-padding-top: 96px; }
+  body {
+    background:
+      radial-gradient(circle at 88% 4%, rgb(95 144 244 / .12), transparent 33%),
+      var(--bg);
+    color: var(--text);
+  }
+  .wrap { max-width: 1160px; padding: 0 24px; }
+  .skip-link { position: absolute; left: 12px; top: -80px; z-index: 10; padding: 9px 14px; background: var(--surface); border: 2px solid var(--accent); border-radius: 8px; }
+  .skip-link:focus { top: 12px; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+  header.top { position: relative; z-index: 5; padding: 24px 0; border-bottom: 1px solid var(--border); }
+  .brand { font-size: 20px; letter-spacing: -.04em; font-weight: 750; }
+  .brand img { width: 32px; height: 32px; border-radius: 7px; }
+  nav a { font-weight: 600; font-size: 14px; padding: 6px 1px; }
+  nav a:hover, nav a:focus-visible { color: var(--accent); }
+  .mobile-menu { display: none; }
+  .hero { padding: 80px 0 44px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); background: var(--bg-soft); border: 1px solid var(--border); border-radius: 99px; padding: 6px 14px; font-size: 12px; font-weight: 760; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 23px; }
+  .eyebrow::before { content: ""; display: block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .hero h1 { font-size: clamp(39px, 6.1vw, 72px); line-height: 1.05; letter-spacing: -.055em; max-width: 850px; margin: 0 auto 22px; }
+  .hero p { color: var(--text-2); max-width: 685px; font-size: clamp(17px, 2vw, 20px); }
+  .actions { gap: 12px; }
+  .btn { padding: 13px 22px; border-radius: 11px; background: var(--surface); font-size: 15px; box-shadow: 0 3px 10px rgb(25 53 104 / .04); transition: transform .15s ease, box-shadow .15s ease; }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 7px 22px rgb(25 53 104 / .14); }
+  .btn.primary { box-shadow: 0 8px 20px rgb(36 77 197 / .17); }
+  .meta { font-size: 13px; margin-top: 18px; }
+  .shot { background: var(--surface); border-radius: 13px; box-shadow: var(--shadow); }
+  .hero-shot { border-radius: 15px; }
+  .hero-visual { margin: 8px 0 0; }
+  .hero-visual figcaption { margin-top: 12px; color: var(--text-2); text-align: center; font-size: 13px; }
+  section { padding: 88px 0 0; }
+  h2 { font-size: clamp(27px, 3.4vw, 38px); letter-spacing: -.035em; line-height: 1.2; margin-bottom: 12px; }
+  .lead { max-width: 740px; margin-bottom: 30px; }
+  .features { gap: 14px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .features > div { padding: 23px 24px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); transition: border-color .15s ease; }
+  .features > div:hover { border-color: var(--accent); }
+  .features h3 { font-size: 16px; margin-bottom: 9px; letter-spacing: -.015em; }
+  .features p { font-size: 14px; line-height: 1.65; }
+  .pair { gap: 20px; }
+  .pair figure { min-width: 0; }
+  .pair figure a { display: block; }
+  .pair figcaption { font-size: 13px; }
+  .steps { display: grid; gap: 16px; grid-template-columns: repeat(3, 1fr); counter-reset: step; }
+  .steps article { border-top: 2px solid var(--border); padding-top: 18px; }
+  .steps article::before { counter-increment: step; content: "0" counter(step); font: 750 13px/1.4 ui-monospace, monospace; color: var(--accent); display: block; margin-bottom: 10px; }
+  .steps h3 { margin: 0 0 6px; font-size: 17px; }
+  .steps p { margin: 0; color: var(--text-2); font-size: 14px; }
+  .cols { gap: 20px; }
+  .cols table { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
+  .cols th, .cols td { padding: 11px 13px; }
+  .cols tr:last-child td { border-bottom: 0; }
+  kbd { color: var(--text); background: var(--bg-soft); }
+  .platforms { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .platform { background: var(--surface); border: 1px solid var(--border); border-radius: 15px; padding: 25px; min-width: 0; }
+  .platform h3 { font-size: 20px; margin: 0 0 8px; letter-spacing: -.025em; }
+  .platform p { margin: 0 0 18px; font-size: 14px; color: var(--text-2); min-height: 46px; }
+  .download-links { display: flex; flex-direction: column; align-items: stretch; gap: 9px; }
+  .download-links a { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--accent); text-decoration: none; font-weight: 650; font-size: 14px; overflow-wrap: anywhere; }
+  .download-links a:hover { background: var(--bg-soft); border-color: var(--accent); }
+  .file-size { color: var(--text-2); font-size: 12px; font-weight: 400; white-space: nowrap; }
+  .note { color: var(--text-2); font-size: 14px; padding: 15px 18px; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; margin-top: 20px; }
+  .news { background: var(--surface); border-radius: 14px; padding: 28px 30px; }
+  .news h2 { font-size: 24px; }
+  .privacy { border-top: 1px solid var(--border); padding-top: 25px; }
+  .privacy p { margin-bottom: 0; color: var(--text-2); }
+  footer { margin-top: 72px; }
+  @media (max-width: 900px) {
+    .features { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .platforms { grid-template-columns: 1fr; }
+    .platform p { min-height: 0; }
+    .download-links { flex-direction: row; flex-wrap: wrap; }
+  }
+  @media (max-width: 760px) {
+    .wrap { padding: 0 18px; }
+    .desktop-nav { display: none; }
+    .mobile-menu { display: block; position: relative; }
+    .mobile-menu summary { cursor: pointer; list-style: none; background: var(--surface); border: 1px solid var(--border); padding: 8px 13px; border-radius: 9px; font-size: 14px; font-weight: 650; }
+    .mobile-menu summary::-webkit-details-marker { display: none; }
+    .mobile-menu nav { position: absolute; right: 0; top: calc(100% + 8px); display: grid; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; min-width: 170px; box-shadow: var(--shadow); padding: 8px; }
+    .mobile-menu nav a { display: block; margin: 0; padding: 10px 12px; }
+    .hero { padding: 56px 0 31px; }
+    .features { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; }
+    section { padding-top: 68px; }
+    .cols { grid-template-columns: 1fr; }
+    .cols table { font-size: 13px; }
+    footer { margin-top: 58px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .btn { transition: none; }
+    .btn:hover { transform: none; }
+  }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
 <div class="wrap">
   <header class="top">
-    <a class="brand" href="./"><img src="favicon.svg" alt="">Scribe</a>
-    <nav>
+    <a class="brand" href="./" aria-label="Scribe home"><img src="favicon.svg" alt="" width="32" height="32">Scribe</a>
+    <nav class="desktop-nav" aria-label="Primary navigation">
       <a href="#features">Features</a>
+      <a href="#workflow">How it works</a>
       <a href="#shortcuts">Shortcuts</a>
       <a href="#download">Download</a>
-      <a href="https://github.com/abusuraihsakhri/scribe">GitHub</a>
+      <a href="https://github.com/abusuraihsakhri/scribe">GitHub ↗</a>
     </nav>
+    <details class="mobile-menu">
+      <summary>Menu</summary>
+      <nav aria-label="Mobile navigation">
+        <a href="#features">Features</a>
+        <a href="#workflow">How it works</a>
+        <a href="#shortcuts">Shortcuts</a>
+        <a href="#download">Download</a>
+        <a href="https://github.com/abusuraihsakhri/scribe">GitHub ↗</a>
+      </nav>
+    </details>
   </header>
+  <main id="main">
 
   <div class="hero">
-    <h1>A small, native Markdown editor</h1>
-    <p>Write on the left, read the result on the right. Scribe opens your <code>.md</code> files straight from Explorer or Finder, keeps them in tabs, and saves them with their original line endings.</p>
+    <span class="eyebrow">A native editor for your Markdown files</span>
+    <h1>Write Markdown.<br>Stay in flow.</h1>
+    <p>Meet Scribe: a focused desktop editor with side-by-side preview, useful keyboard shortcuts, and files that stay on your computer. For Windows, macOS, and Linux.</p>
     <div class="actions">
-      <a class="btn primary" id="download-primary" href="https://github.com/abusuraihsakhri/scribe/releases/latest">Download Scribe</a>
-      <a class="btn" href="https://github.com/abusuraihsakhri/scribe">View source</a>
+      <a class="btn primary" id="download-primary" href="#download">Get Scribe <span aria-hidden="true">↓</span></a>
+      <a class="btn" href="https://github.com/abusuraihsakhri/scribe">Explore the source ↗</a>
     </div>
-    <div class="meta" id="release-meta">Free, for Windows, macOS and Linux.</div>
+    <div class="meta" id="release-meta" aria-live="polite">Free and open source · Windows, macOS, Linux</div>
   </div>
 
-  <picture>
-    <source srcset="screenshots/split-dark.png" media="(prefers-color-scheme: dark)">
-    <img class="shot hero-shot" src="screenshots/split-light.png" width="1280" height="760" alt="Scribe in split view: Markdown source with line numbers on the left, the rendered document with a task list and table on the right.">
-  </picture>
+  <figure class="hero-visual">
+    <picture>
+      <source srcset="screenshots/split-dark.png" media="(prefers-color-scheme: dark)">
+      <img class="shot hero-shot" src="screenshots/split-light.png" width="1280" height="760" fetchpriority="high" decoding="async" alt="Scribe split view showing Markdown source alongside a formatted preview with a task list and table.">
+    </picture>
+    <figcaption>Write and preview in one workspace. Screenshot of the desktop application.</figcaption>
+  </figure>
 
   <section id="features">
     <h2>What it does</h2>
-    <p class="lead">Scribe is built with Tauri, so it uses your system's web view instead of shipping its own browser. The Windows installer is 2.9 MB.</p>
+    <p class="lead">The essentials for writing and reviewing Markdown, without an account or a complicated workspace.</p>
     <div class="features">
       <div>
         <h3>Editor, split or preview</h3>
@@ -159,8 +303,8 @@
         <p>Scribe remembers whether a file uses Windows (CRLF) or Unix (LF) line endings and saves it the same way, so git doesn't see changes you didn't make.</p>
       </div>
       <div>
-        <h3>Safe to open anything</h3>
-        <p>The preview strips scripts and event handlers from Markdown, and blocks local image paths that point outside the file's folder.</p>
+        <h3>Safer Markdown preview</h3>
+        <p>Rendered Markdown is sanitized, and local image paths are checked before loading. As with any file, use care with untrusted content and external links.</p>
       </div>
       <div>
         <h3>Opens from your file manager</h3>
@@ -177,7 +321,17 @@
     </div>
   </section>
 
-  <section>
+  <section id="workflow">
+    <h2>From download to first draft</h2>
+    <p class="lead">No registration, workspace setup, or cloud account required.</p>
+    <div class="steps">
+      <article><h3>Install the desktop app</h3><p>Choose the package that matches your operating system below.</p></article>
+      <article><h3>Open a Markdown file</h3><p>Create a new note or open an existing <code>.md</code> document with the file picker or drag and drop.</p></article>
+      <article><h3>Write, preview, save</h3><p>Switch between editor, split, and preview layouts. Your edits save to the local file you choose.</p></article>
+    </div>
+  </section>
+
+  <section aria-label="Application screenshots">
     <div class="pair">
       <figure>
         <img class="shot" src="screenshots/command-palette.png" width="1280" height="760" loading="lazy" alt="The command palette open over the editor, filtered to view commands, with Split View and Preview Mode listed with their shortcuts.">
@@ -192,7 +346,7 @@
 
   <section id="shortcuts">
     <h2>Keyboard shortcuts</h2>
-    <p class="lead">On macOS, use <kbd>Cmd</kbd> where this list says <kbd>Ctrl</kbd>.</p>
+    <p class="lead">Use <kbd>Cmd</kbd> instead of <kbd>Ctrl</kbd> on macOS. Shortcuts operate in the desktop application.</p>
     <div class="cols">
       <table>
         <tr><th>Keys</th><th>Action</th></tr>
@@ -220,15 +374,26 @@
   </section>
 
   <section id="download">
-    <h2>Download</h2>
-    <p class="lead" id="download-lead">Installers for every platform are on the <a href="https://github.com/abusuraihsakhri/scribe/releases/latest">latest release</a> page.</p>
-    <table id="downloads">
-      <tr><th>Platform</th><th>File</th></tr>
-      <tr><td>Windows</td><td><a href="https://github.com/abusuraihsakhri/scribe/releases/latest">Installer (.exe) or .msi</a></td></tr>
-      <tr><td>macOS (Apple silicon and Intel)</td><td><a href="https://github.com/abusuraihsakhri/scribe/releases/latest">.dmg</a></td></tr>
-      <tr><td>Linux</td><td><a href="https://github.com/abusuraihsakhri/scribe/releases/latest">.AppImage, .deb or .rpm</a></td></tr>
-    </table>
-    <p class="lead" style="margin-top:20px">The builds aren't code-signed yet, so Windows SmartScreen and macOS Gatekeeper will ask you to confirm the first time you open Scribe.</p>
+    <h2>Download Scribe</h2>
+    <p class="lead" id="download-lead">Choose your operating system. The links below open the <a href="https://github.com/abusuraihsakhri/scribe/releases/latest">latest GitHub release</a>; available installer files are listed automatically when release information loads.</p>
+    <div class="platforms" aria-label="Download options">
+      <article class="platform">
+        <h3>Windows</h3>
+        <p>Windows 10/11 · 64-bit · EXE installer or MSI package.</p>
+        <div class="download-links" id="windows-downloads"><a href="https://github.com/abusuraihsakhri/scribe/releases/latest">View Windows downloads ↗</a></div>
+      </article>
+      <article class="platform">
+        <h3>macOS</h3>
+        <p>Universal DMG for Apple silicon and Intel Macs.</p>
+        <div class="download-links" id="mac-downloads"><a href="https://github.com/abusuraihsakhri/scribe/releases/latest">View macOS downloads ↗</a></div>
+      </article>
+      <article class="platform">
+        <h3>Linux</h3>
+        <p>Choose AppImage, DEB, or RPM according to your distribution.</p>
+        <div class="download-links" id="linux-downloads"><a href="https://github.com/abusuraihsakhri/scribe/releases/latest">View Linux downloads ↗</a></div>
+      </article>
+    </div>
+    <p class="note">The application is not code-signed at present. Your operating system may display an unverified publisher warning. Verify the release and its source before installing. Scribe is a desktop application, not an online editor.</p>
   </section>
 
   <section>
@@ -243,6 +408,12 @@
     </div>
   </section>
 
+  <section id="privacy" class="privacy">
+    <h2>Local files, local control</h2>
+    <p>Scribe works with Markdown documents on your device rather than requiring a hosted account. Files are opened and saved locally. Markdown that references images on external websites may request those images from the referenced host. The project site itself requests public release information from GitHub for download links.</p>
+  </section>
+
+  </main>
   <footer>
     <span>Scribe is built with Tauri 2, React and CodeMirror 6.</span>
     <span><a href="https://github.com/abusuraihsakhri/scribe">Source</a> · <a href="https://github.com/abusuraihsakhri/scribe/issues">Report an issue</a></span>
@@ -250,42 +421,104 @@
 </div>
 
 <script>
-  // Fill in direct download links from the latest GitHub release. The static links above remain if this fails.
-  (async () => {
+  // The fallback links are permanent; release data only upgrades them.
+  (async function loadRelease() {
+    const repoPath = "/abusuraihsakhri/scribe/";
+    const releasePage = "https://github.com/abusuraihsakhri/scribe/releases/latest";
+    const validUrl = (value, kind) => {
+      if (typeof value !== "string") return null;
+      try {
+        const url = new URL(value);
+        const prefix = kind === "asset" ? repoPath + "releases/download/" : repoPath + "releases/tag/";
+        return url.protocol === "https:" && url.hostname === "github.com" &&
+          url.pathname.startsWith(prefix) ? url.href : null;
+      } catch {
+        return null;
+      }
+    };
+    const fileSize = (bytes) => Number.isFinite(bytes) && bytes >= 0
+      ? (bytes / 1048576).toFixed(1) + " MB" : "";
+    const schemes = [
+      { id: "windows-downloads", files: [
+        ["Windows installer (.exe)", /x64-setup\.exe$/i],
+        ["Windows installer (.msi)", /\.msi$/i]
+      ] },
+      { id: "mac-downloads", files: [
+        ["Universal Mac installer (.dmg)", /universal\.dmg$/i],
+        ["Mac installer (.dmg)", /\.dmg$/i]
+      ] },
+      { id: "linux-downloads", files: [
+        ["Linux AppImage", /\.AppImage$/i],
+        ["Linux Debian package (.deb)", /\.deb$/i],
+        ["Linux RPM package (.rpm)", /\.rpm$/i]
+      ] }
+    ];
     try {
-      const res = await fetch("https://api.github.com/repos/abusuraihsakhri/scribe/releases/latest");
-      if (!res.ok) return;
-      const release = await res.json();
-      const assets = release.assets || [];
-      const find = (re) => assets.find((a) => re.test(a.name));
-      const link = (asset, label) => asset ? `<a href="${asset.browser_download_url}">${label}</a> <span style="color:var(--text-2)">(${(asset.size / 1048576).toFixed(1)} MB)</span>` : "";
-      const join = (...parts) => parts.filter(Boolean).join(" · ");
+      const response = await fetch("https://api.github.com/repos/abusuraihsakhri/scribe/releases/latest", {
+        headers: { Accept: "application/vnd.github+json" }
+      });
+      if (!response.ok) return;
+      const release = await response.json();
+      const assets = Array.isArray(release.assets) ? release.assets : [];
+      const page = validUrl(release.html_url, "release") || releasePage;
+      const version = typeof release.tag_name === "string" &&
+        /^v?\d+\.\d+\.\d+(?:[-+.][a-zA-Z0-9.-]+)?$/.test(release.tag_name)
+        ? release.tag_name : null;
+      const primaryFiles = {};
 
-      const exe = find(/x64-setup\.exe$/), msi = find(/\.msi$/), dmg = find(/\.dmg$/);
-      const appimage = find(/\.AppImage$/), deb = find(/\.deb$/), rpm = find(/\.rpm$/);
-      const rows = [
-        ["Windows", join(link(exe, "Installer (.exe)"), link(msi, ".msi"))],
-        ["macOS (Apple silicon and Intel)", link(dmg, ".dmg")],
-        ["Linux", join(link(appimage, ".AppImage"), link(deb, ".deb"), link(rpm, ".rpm"))],
-      ];
-      const table = document.getElementById("downloads");
-      table.innerHTML = "<tr><th>Platform</th><th>File</th></tr>" + rows
-        .map(([platform, cell]) => `<tr><td>${platform}</td><td>${cell || `<a href="${release.html_url}">See release page</a>`}</td></tr>`)
-        .join("");
+      for (const scheme of schemes) {
+        const parent = document.getElementById(scheme.id);
+        if (!parent) continue;
+        const fragment = document.createDocumentFragment();
+        const used = new Set();
+        for (const [label, regex] of scheme.files) {
+          const asset = assets.find((item) => item && typeof item.name === "string" &&
+            regex.test(item.name) && validUrl(item.browser_download_url, "asset") &&
+            !used.has(item.name));
+          if (!asset) continue;
+          used.add(asset.name);
+          if (!primaryFiles[scheme.id]) primaryFiles[scheme.id] = asset.browser_download_url;
+          const link = document.createElement("a");
+          link.href = validUrl(asset.browser_download_url, "asset");
+          link.textContent = label + " ↗";
+          const size = fileSize(asset.size);
+          if (size) {
+            const small = document.createElement("span");
+            small.className = "file-size";
+            small.textContent = size;
+            link.appendChild(small);
+          }
+          fragment.appendChild(link);
+        }
+        // Do not replace working fallback content if the release lacks this platform.
+        if (fragment.childNodes.length) parent.replaceChildren(fragment);
+      }
 
-      const version = release.tag_name;
-      document.getElementById("download-lead").innerHTML = `Version ${version.replace(/^v/, "")}. All files are also on the <a href="${release.html_url}">release page</a>.`;
-      document.getElementById("release-meta").textContent = `Version ${version.replace(/^v/, "")}. Free, for Windows, macOS and Linux.`;
+      if (version) {
+        const meta = document.getElementById("release-meta");
+        if (meta) meta.textContent = "Free and open source · Latest published release: " + version;
+        const lead = document.getElementById("download-lead");
+        if (lead) {
+          lead.replaceChildren(document.createTextNode("Release " + version + " · Choose a package below, or see all files on the "));
+          const a = document.createElement("a");
+          a.href = page;
+          a.textContent = "GitHub release page";
+          lead.append(a, document.createTextNode("."));
+        }
+      }
 
-      const isWindows = /Windows/i.test(navigator.userAgent), isMac = /Mac OS X|Macintosh/i.test(navigator.userAgent);
-      const primary = isWindows ? exe : isMac ? dmg : null;
-      if (primary) {
-        const button = document.getElementById("download-primary");
-        button.href = primary.browser_download_url;
-        button.textContent = `Download for ${isWindows ? "Windows" : "macOS"}`;
+      const platform = (navigator.userAgentData && navigator.userAgentData.platform) ||
+        navigator.platform || navigator.userAgent || "";
+      const preferred = /Win/i.test(platform) ? "windows-downloads"
+        : /Mac/i.test(platform) ? "mac-downloads" : /Linux/i.test(platform) ? "linux-downloads" : null;
+      const button = document.getElementById("download-primary");
+      if (button && preferred && primaryFiles[preferred]) {
+        button.href = primaryFiles[preferred];
+        button.textContent = "Download for " + (preferred === "windows-downloads" ? "Windows" :
+          preferred === "mac-downloads" ? "macOS" : "Linux") + " ↗";
       }
     } catch {
-      // Keep the static links.
+      // Offline, API rate-limited, and blocked requests retain the fallback links.
     }
   })();
 </script>
