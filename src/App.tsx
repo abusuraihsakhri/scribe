@@ -518,7 +518,7 @@ li + li { margin-top: 0.25em; }
 
   // Window title
   useEffect(() => {
-    const title = activeDoc ? `${isDirty(activeDoc) ? "● " : ""}${activeDoc.title} — Scribe` : "Scribe";
+    const title = activeDoc ? `${isDirty(activeDoc) ? "● " : ""}${activeDoc.title} | Scribe` : "Scribe";
     void getCurrentWindow().setTitle(title);
   }, [activeDoc]);
 
