@@ -6,7 +6,8 @@ import { test } from "node:test";
 import { runInNewContext } from "node:vm";
 
 const page = await readFile(new URL("../site/index.html", import.meta.url), "utf8");
-const script = page.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+const script = page.match(/<script id="release-script">([\s\S]*?)<\/script>/)?.[1];
+const css = await readFile(new URL("../site/site.css", import.meta.url), "utf8");
 const release = "https://github.com/abusuraihsakhri/scribe/releases/download/v0.1.3/";
 const latest = "https://github.com/abusuraihsakhri/scribe/releases/latest";
 
@@ -84,14 +85,19 @@ const fixture = {
 
 test("page has semantic landmarks and accessible mobile navigation", () => {
   assert.match(page, /<html lang="en">/);
-  assert.match(page, /<main id="main">/);
+  assert.match(page, /<main id="main"/);
   assert.match(page, /href="#main"/);
   assert.match(page, /<h1>/);
   assert.match(page, /aria-label="Mobile navigation"/);
-  assert.match(page, /\.mobile-menu nav a\s*\{\s*display:\s*block\s*;/);
-  assert.match(page, /prefers-reduced-motion/);
-  assert.match(page, /prefers-color-scheme: dark/);
-  assert.equal((page.match(/<script>/g) || []).length, 1);
+  assert.match(css, /\.mobile-menu nav a\s*\{[^}]*display:\s*block\s*;/);
+  assert.match(css, /prefers-reduced-motion/);
+  assert.match(css, /:root\[data-theme="dark"\]/);
+  assert.equal((page.match(/<script\b/g) || []).length, 3);
+  assert.match(page, /id="themeToggle"/);
+  assert.match(page, /id="theme-bootstrap"/);
+  assert.match(page, /id="theme-init"/);
+  assert.match(page, /href="site\.css"/);
+  assert.match(page, /localStorage\.setItem\("scribe-theme", next\)/);
 });
 
 test("referenced local image assets exist", () => {
