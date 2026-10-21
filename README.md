@@ -1,4 +1,4 @@
-# Scribe — Native Markdown Editor & Viewer
+# Scribe | Native Markdown Editor & Viewer
 
 ### [Open the Project Website & Downloads →](https://abusuraihsakhri.github.io/scribe/)
 
@@ -77,38 +77,38 @@ Instead of bundling a heavyweight browser runtime like traditional Electron edit
 ## ✨ Key Features
 
 ### ⚡ Next-Generation CodeMirror 6 Editor
-- **Full Markdown Syntax Highlighting** — Real-time syntax tree parsing with distinctive tokens for headings, blockquotes, inline formatting, code spans, lists, and links.
-- **Smart Editing & Auto-Continuation** — Pressing <kbd>Enter</kbd> automatically continues bulleted lists (`-`, `*`, `+`), numbered lists (`1.`, `2.`), checklists (`- [ ]`), and blockquotes (`>`). Pressing <kbd>Enter</kbd> on an empty item cleanly dismisses the marker.
-- **Auto-Closing & Bracket Matching** — Automatically inserts pairs for parentheses `()`, square brackets `[]`, curly braces `{}`, markdown bold `****`, italic `**`, strikethrough `~~~~`, and inline code `` `` ``.
-- **Formatting Toolbar** — Dedicated one-click formatting buttons for Bold, Italic, Strikethrough, Headings, Inline Code, Code Blocks, Links, Images, Quotes, Lists, Tables, and Dividers.
-- **Customizable Typography** — Select between *Cascadia Code*, *Consolas*, *JetBrains Mono*, or your system monospaced font, with adjustable font size, tab stop size (2, 4, 8 spaces), word wrapping, and active line highlight gutters.
+- **Full Markdown Syntax Highlighting**: Real-time syntax tree parsing with distinctive tokens for headings, blockquotes, inline formatting, code spans, lists, and links.
+- **Smart Editing & Auto-Continuation**: Pressing <kbd>Enter</kbd> automatically continues bulleted lists (`-`, `*`, `+`), numbered lists (`1.`, `2.`), checklists (`- [ ]`), and blockquotes (`>`). Pressing <kbd>Enter</kbd> on an empty item cleanly dismisses the marker.
+- **Auto-Closing & Bracket Matching**: Automatically inserts pairs for parentheses `()`, square brackets `[]`, curly braces `{}`, markdown bold `****`, italic `**`, strikethrough `~~~~`, and inline code `` `` ``.
+- **Formatting Toolbar**: Dedicated one-click formatting buttons for Bold, Italic, Strikethrough, Headings, Inline Code, Code Blocks, Links, Images, Quotes, Lists, Tables, and Dividers.
+- **Customizable Typography**: Select between *Cascadia Code*, *Consolas*, *JetBrains Mono*, or your system monospaced font, with adjustable font size, tab stop size (2, 4, 8 spaces), word wrapping, and active line highlight gutters.
 
 ### 🌓 Live Dual-Engine Preview & Layouts
-- **GFM Compliant** — Complete GitHub Flavored Markdown specification support, including tables, strikethrough, autolinks, and interactive task lists.
-- **Code Block Highlighting** — Syntax-highlighted code blocks across 100+ programming languages powered by `rehype-highlight` and `highlight.js`, complete with an automatic language pill and one-click clipboard copy button.
+- **GFM Compliant**: Complete GitHub Flavored Markdown specification support, including tables, strikethrough, autolinks, and interactive task lists.
+- **Code Block Highlighting**: Syntax-highlighted code blocks across 100+ programming languages powered by `rehype-highlight` and `highlight.js`, complete with an automatic language pill and one-click clipboard copy button.
 - **Three Flexible View Modes**:
   - **Editor Mode** (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>1</kbd>): Minimalist, distraction-free writing environment.
   - **Split View** (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>2</kbd>): Simultaneous editing and real-time live preview separated by a smooth, draggable split divider.
   - **Preview Mode** (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>3</kbd>): Clean reading view with GitHub-inspired typography.
-- **Relative Image Resolution** — Automatically resolves local image files relative to your document's directory path.
+- **Relative Image Resolution**: Automatically resolves local image files relative to your document's directory path.
 
 ### 📑 Multi-Document Tab Management & Safety
-- **Multi-Tab Workspace** — Open and edit multiple documents concurrently. Tabs include dirty change indicators (`●`), quick close buttons, and a context menu (*Close*, *Close Others*, *Close All*).
-- **Unsaved Changes Safeguard** — Alerts you before closing modified files or quitting the application to ensure changes are never accidentally lost.
-- **Configurable Autosave** — Automatically writes document changes to disk in the background at customizable intervals (5s to 120s).
-- **External File Modification Detection** — Detects when an open file is edited outside Scribe and updates cleanly.
-- **Recent Files Drawer** — Pinned sidebar list displaying recently opened documents for one-click access.
-- **Standalone HTML Export** — Export rendered, styled HTML files with self-contained typography independent of the view mode.
+- **Multi-Tab Workspace**: Open and edit multiple documents concurrently. Tabs include dirty change indicators (`●`), quick close buttons, and a context menu (*Close*, *Close Others*, *Close All*).
+- **Unsaved Changes Safeguard**: Alerts you before closing modified files or quitting the application to ensure changes are never accidentally lost.
+- **Configurable Autosave**: Automatically writes document changes to disk in the background at customizable intervals (5s to 120s).
+- **External File Modification Detection**: Detects when an open file is edited outside Scribe and updates cleanly.
+- **Recent Files Drawer**: Pinned sidebar list displaying recently opened documents for one-click access.
+- **Standalone HTML Export**: Export rendered, styled HTML files with self-contained typography independent of the view mode.
 
 ### 🚀 Command Palette & Productivity
-- **Fuzzy Command Launcher** (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) — Quick-launcher with fuzzy matching to trigger any editor command, toggle view modes, cycle themes, or adjust zoom without leaving the keyboard.
-- **Search & Replace Panel** (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>F</kbd> / <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>H</kbd>) — Fast in-document search with match count indicator, next/previous navigation, match case, whole word, and regular expressions.
-- **Live Status Bar** — Live calculation of words, character count, current cursor line and column, file encoding (UTF-8), and line ending formats (LF / CRLF).
+- **Fuzzy Command Launcher** (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>): Quick-launcher with fuzzy matching to trigger any editor command, toggle view modes, cycle themes, or adjust zoom without leaving the keyboard.
+- **Search & Replace Panel** (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>F</kbd> / <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>H</kbd>): Fast in-document search with match count indicator, next/previous navigation, match case, whole word, and regular expressions.
+- **Live Status Bar**: Live calculation of words, character count, current cursor line and column, file encoding (UTF-8), and line ending formats (LF / CRLF).
 
 ### 🎨 Native OS Integration & Fluid Theming
-- **Adaptive Theming** — Switch effortlessly between Light, Dark, and System theme (which follows your operating system's color mode).
-- **Native File Dialogs** — Uses operating system file open and save dialogs with `.md`, `.markdown`, `.mdown`, and `.mkd` file filters.
-- **Drag-and-Drop Ingestion** — Drag Markdown files directly from Windows File Explorer, macOS Finder, or Linux file managers into Scribe to open them instantly.
+- **Adaptive Theming**: Switch effortlessly between Light, Dark, and System theme (which follows your operating system's color mode).
+- **Native File Dialogs**: Uses operating system file open and save dialogs with `.md`, `.markdown`, `.mdown`, and `.mkd` file filters.
+- **Drag-and-Drop Ingestion**: Drag Markdown files directly from Windows File Explorer, macOS Finder, or Linux file managers into Scribe to open them instantly.
 
 ---
 
@@ -347,21 +347,21 @@ Generated packages will be output to `src-tauri/target/release/bundle/`:
 Scribe provides a built-in Settings dialog accessible via the toolbar or <kbd>Ctrl/Cmd</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> → **Settings**:
 
 ### 🖊️ Editor Preferences
-* **Font Family** — Choose between *Cascadia Code*, *Consolas*, *JetBrains Mono*, or system monospaced.
-* **Font Size** — Slider from 10px to 24px (default: 14.5px).
-* **Tab Size** — Choose 2, 4, or 8 spaces.
-* **Word Wrap** — Toggle soft line wrapping.
-* **Line Numbers** — Show or hide line numbers in the gutter.
-* **Highlight Active Line** — Highlight the line currently under the cursor.
+* **Font Family**: Choose between *Cascadia Code*, *Consolas*, *JetBrains Mono*, or system monospaced.
+* **Font Size**: Slider from 10px to 24px (default: 14.5px).
+* **Tab Size**: Choose 2, 4, or 8 spaces.
+* **Word Wrap**: Toggle soft line wrapping.
+* **Line Numbers**: Show or hide line numbers in the gutter.
+* **Highlight Active Line**: Highlight the line currently under the cursor.
 
 ### 🎨 Appearance
-* **Theme** — Select *Light*, *Dark*, or *System* (follows your operating system preference).
-* **Sidebar** — Toggle visibility of the documents and recent files drawer.
+* **Theme**: Select *Light*, *Dark*, or *System* (follows your operating system preference).
+* **Sidebar**: Toggle visibility of the documents and recent files drawer.
 
 ### 💾 Files & Autosave
-* **Autosave** — Toggle automatic background document saving.
-* **Autosave Interval** — Adjustable from 5 seconds to 120 seconds.
-* **Confirm Before Close** — Toggle unsaved changes guard prompts.
+* **Autosave**: Toggle automatic background document saving.
+* **Autosave Interval**: Adjustable from 5 seconds to 120 seconds.
+* **Confirm Before Close**: Toggle unsaved changes guard prompts.
 
 ---
 
