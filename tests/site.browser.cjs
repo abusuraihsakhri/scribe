@@ -16,7 +16,10 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
       for (const width of sizes) {
         await page.setViewportSize({ width, height: 800 });
         await page.goto(url, { waitUntil: "load" });
-        await page.locator("picture img").first().evaluate(img => img.decode());
+        for (const image of await page.locator("img").all()) {
+          await image.scrollIntoViewIfNeeded();
+          await image.evaluate(node => node.decode());
+        }
 
         const data = await page.evaluate(() => {
           const width = document.documentElement.clientWidth;
