@@ -3,7 +3,7 @@ import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
 
 /** Editor chrome (gutters, selection, cursor) driven by the app's CSS variables,
- *  so it repaints automatically when the theme toggles — no editor recreation needed. */
+ *  so it repaints automatically when the theme toggles, with no editor recreation needed. */
 export const editorAppearance = EditorView.theme({
   "&": {
     color: "var(--editor-fg)",

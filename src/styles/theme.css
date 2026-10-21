@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Design tokens — Windows 11 Fluent-inspired neutral palette.
+/* Design tokens: Windows 11 Fluent-inspired neutral palette.
    Light values live on :root; dark values override under
    [data-theme="dark"] or (system + prefers-color-scheme: dark). */
 
@@ -50,7 +50,7 @@
   --syntax-punctuation: #8a8a8a;
 }
 
-/* Dark theme tokens — explicit dark mode */
+/* Dark theme tokens: explicit dark mode */
 :root[data-theme="dark"] {
   --bg-app: #202020;
   --bg-surface: #262626;
@@ -93,7 +93,7 @@
   --syntax-punctuation: #6e6e6e;
 }
 
-/* Dark theme tokens — system mode when OS prefers dark */
+/* Dark theme tokens: system mode when OS prefers dark */
 @media (prefers-color-scheme: dark) {
   :root[data-theme="system"] {
     --bg-app: #202020;

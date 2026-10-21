@@ -6,7 +6,7 @@ const BULLET_RE = /^(\s*)([-*+])(\s+)(\[[ xX]\]\s+)?/;
 const ORDERED_RE = /^(\s*)(\d+)([.)])(\s+)/;
 const QUOTE_RE = /^(\s*)(>+)(\s?)/;
 
-/** Continues lists, checklists, and blockquotes when Enter is pressed —
+/** Continues lists, checklists, and blockquotes when Enter is pressed,
  *  and terminates them (removing the empty marker) when the item is empty. */
 const continueListOnEnter: Command = (view) => {
   const { state } = view;
