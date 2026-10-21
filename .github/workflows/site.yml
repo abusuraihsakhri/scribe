@@ -37,7 +37,7 @@ jobs:
       - name: Install isolated browser test dependency
         run: npm install --prefix "$RUNNER_TEMP/scribe-site-browser" --no-audit --no-fund --no-save playwright@1.56.1
       - name: Install Chromium with system dependencies
-        run: "$RUNNER_TEMP/scribe-site-browser/node_modules/.bin/playwright" install chromium --with-deps
+        run: $RUNNER_TEMP/scribe-site-browser/node_modules/.bin/playwright install chromium --with-deps
       - name: Test responsive layout in Chromium
         env:
           PLAYWRIGHT_MODULE: ${{ runner.temp }}/scribe-site-browser/node_modules/playwright
