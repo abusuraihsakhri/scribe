@@ -6,7 +6,7 @@ on:
     paths: ['site/**', 'tests/site.*', '.github/workflows/site.yml']
   push:
     branches: [main]
-    paths: ['site/**', 'tests/site.test.mjs', '.github/workflows/site.yml']
+    paths: ['site/**', 'tests/site.*', '.github/workflows/site.yml']
   workflow_dispatch:
 
 permissions:
