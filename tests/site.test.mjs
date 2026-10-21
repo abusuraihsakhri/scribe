@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { runInNewContext } from "node:vm";
 
@@ -149,4 +150,25 @@ test("Linux and macOS select the correct available primary download", async () =
   const linux = await renderRelease(fixture, "Linux x86_64");
   assert.equal(mac["download-primary"].href, fixture.assets[1].browser_download_url);
   assert.equal(linux["download-primary"].href, fixture.assets[2].browser_download_url);
+});
+
+
+test("repository text files contain no em dash punctuation", async () => {
+  const root = fileURLToPath(new URL("../", import.meta.url));
+  const ignored = new Set([".git", "node_modules", "dist", "target", "coverage"]);
+  const textFile = /\.(?:md|html|css|tsx?|jsx?|cjs|mjs|json|yml|yaml|toml|rs|svg|txt)$/i;
+
+  async function checkDirectory(directory) {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (!ignored.has(entry.name)) await checkDirectory(join(directory, entry.name));
+      } else if (entry.isFile() && textFile.test(entry.name)) {
+        const name = join(directory, entry.name);
+        const content = await readFile(name, "utf8");
+        assert.ok(!content.includes("\u2014"), relative(root, name) + " contains an em dash");
+      }
+    }
+  }
+
+  await checkDirectory(root);
 });
