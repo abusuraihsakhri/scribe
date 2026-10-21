@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f7f9fc">
+<meta name="theme-color" content="#fbfaf8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#191d1b" media="(prefers-color-scheme: dark)">
 <meta property="og:url" content="https://abusuraihsakhri.github.io/scribe/">
 <link rel="canonical" href="https://abusuraihsakhri.github.io/scribe/">
 <title>Scribe: a small, native Markdown editor</title>
@@ -14,212 +15,221 @@
 <meta property="og:type" content="website">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
+
   :root {
-    --bg: #ffffff;
-    --bg-soft: #f6f8fa;
-    --text: #1f2328;
-    --text-2: #59636e;
-    --border: #d8dee4;
-    --accent: #0078d4;
-    --accent-text: #ffffff;
+    --page: #fbfaf8;
+    --surface: #ffffff;
+    --ink: #222622;
+    --muted: #646963;
+    --rule: #dedfd8;
+    --link: #275643;
+    --button-ink: #ffffff;
+    --focus: #ae642b;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1b1b1f;
-      --bg-soft: #232328;
-      --text: #e6e6e9;
-      --text-2: #a1a1aa;
-      --border: #34343b;
-      --accent: #3b9eff;
-      --accent-text: #0b0b0d;
+      --page: #191d1b;
+      --surface: #202521;
+      --ink: #ebeee8;
+      --muted: #adb5aa;
+      --rule: #414940;
+      --link: #a4d6b5;
+      --button-ink: #17251b;
+      --focus: #f3b276;
       color-scheme: dark;
     }
   }
-  * { box-sizing: border-box; }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 24px; }
   body {
     margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-width: 0;
+    background: var(--page);
+    color: var(--ink);
+    font: 16px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  a { color: var(--accent); }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
-  header.top { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 18px; color: var(--text); text-decoration: none; }
-  .brand img { width: 28px; height: 28px; }
-  nav a { color: var(--text-2); text-decoration: none; margin-left: 20px; font-size: 15px; }
-  nav a:hover { color: var(--text); }
-
-  .hero { text-align: center; padding: 48px 0 32px; }
-  .hero h1 { font-size: clamp(32px, 5vw, 48px); line-height: 1.15; margin: 0 0 16px; letter-spacing: -0.02em; text-wrap: balance; }
-  .hero p { font-size: 19px; color: var(--text-2); max-width: 640px; margin: 0 auto 28px; text-wrap: pretty; }
-  .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  .btn { display: inline-block; padding: 11px 20px; border-radius: 8px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); color: var(--text); }
-  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
-  .meta { margin-top: 14px; font-size: 14px; color: var(--text-2); }
-
-  .shot { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 30px rgb(0 0 0 / 0.12); }
-  .hero-shot { margin: 8px auto 0; }
-
-  section { padding: 64px 0 0; }
-  h2 { font-size: 28px; margin: 0 0 8px; letter-spacing: -0.01em; }
-  .lead { color: var(--text-2); margin: 0 0 32px; max-width: 680px; }
-
-  .features { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 28px 36px; }
-  .features h3 { font-size: 17px; margin: 0 0 6px; }
-  .features p { margin: 0; color: var(--text-2); font-size: 15px; }
-
-  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
-  .pair figure { margin: 0; }
-  .pair figcaption { margin-top: 10px; font-size: 15px; color: var(--text-2); }
-
-  table { width: 100%; border-collapse: collapse; font-size: 15px; }
-  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  th { font-weight: 600; color: var(--text-2); font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; }
-  kbd { font: 13px/1 ui-monospace, "Cascadia Code", Consolas, monospace; padding: 3px 6px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; background: var(--bg-soft); white-space: nowrap; }
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; }
-
-  .news { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 24px 28px; }
-  .news h2 { font-size: 22px; }
-  .news ul { margin: 12px 0 0; padding-left: 20px; }
-  .news li { margin: 6px 0; }
-
-  footer { margin: 80px 0 0; padding: 28px 0 40px; border-top: 1px solid var(--border); color: var(--text-2); font-size: 14px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-  footer a { color: var(--text-2); }
-
-  @media (max-width: 760px) {
-    nav a:not(:last-child) { display: none; }
-    .pair, .cols { grid-template-columns: 1fr; }
-    .hero { padding-top: 24px; }
-    .hero p { font-size: 17px; }
-    td, th { padding: 8px 6px; }
+  img, picture { display: block; max-width: 100%; }
+  img { height: auto; }
+  a { color: var(--link); text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+  .wrap { width: min(100% - 48px, 1024px); margin-inline: auto; min-width: 0; }
+  .skip-link {
+    position: absolute; top: -72px; left: 16px; z-index: 20;
+    background: var(--surface); padding: 8px 12px; border: 1px solid var(--rule);
   }
-
-  /* Product-site refresh: no external CSS or font dependencies. */
-  :root {
-    --bg: #f8faff;
-    --bg-soft: #f0f4fc;
-    --surface: #fff;
-    --text: #15223b;
-    --text-2: #52617a;
-    --border: #dce4f1;
-    --accent: #244dc5;
-    --accent-text: #fff;
-    --focus: #e5892f;
-    --shadow: 0 18px 44px rgb(25 53 104 / .09);
-    color-scheme: light;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0d1424;
-      --bg-soft: #151e31;
-      --surface: #161f32;
-      --text: #eff4ff;
-      --text-2: #b9c6dd;
-      --border: #2e3a50;
-      --accent: #8facff;
-      --accent-text: #0b1428;
-      --focus: #ffc479;
-      --shadow: 0 18px 44px rgb(0 0 0 / .25);
-      color-scheme: dark;
-    }
-  }
-  html { scroll-behavior: smooth; scroll-padding-top: 96px; }
-  body {
-    background:
-      radial-gradient(circle at 88% 4%, rgb(95 144 244 / .12), transparent 33%),
-      var(--bg);
-    color: var(--text);
-  }
-  .wrap { max-width: 1160px; padding: 0 24px; }
-  .skip-link { position: absolute; left: 12px; top: -80px; z-index: 10; padding: 9px 14px; background: var(--surface); border: 2px solid var(--accent); border-radius: 8px; }
   .skip-link:focus { top: 12px; }
-  :focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
-  header.top { position: relative; z-index: 5; padding: 24px 0; border-bottom: 1px solid var(--border); }
-  .brand { font-size: 20px; letter-spacing: -.04em; font-weight: 750; }
-  .brand img { width: 32px; height: 32px; border-radius: 7px; }
-  nav a { font-weight: 600; font-size: 14px; padding: 6px 1px; }
-  nav a:hover, nav a:focus-visible { color: var(--accent); }
-  .mobile-menu { display: none; }
-  .hero { padding: 80px 0 44px; }
-  .eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); background: var(--bg-soft); border: 1px solid var(--border); border-radius: 99px; padding: 6px 14px; font-size: 12px; font-weight: 760; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 23px; }
-  .eyebrow::before { content: ""; display: block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-  .hero h1 { font-size: clamp(39px, 6.1vw, 72px); line-height: 1.05; letter-spacing: -.055em; max-width: 850px; margin: 0 auto 22px; }
-  .hero p { color: var(--text-2); max-width: 685px; font-size: clamp(17px, 2vw, 20px); }
-  .actions { gap: 12px; }
-  .btn { padding: 13px 22px; border-radius: 11px; background: var(--surface); font-size: 15px; box-shadow: 0 3px 10px rgb(25 53 104 / .04); transition: transform .15s ease, box-shadow .15s ease; }
-  .btn:hover { transform: translateY(-2px); box-shadow: 0 7px 22px rgb(25 53 104 / .14); }
-  .btn.primary { box-shadow: 0 8px 20px rgb(36 77 197 / .17); }
-  .meta { font-size: 13px; margin-top: 18px; }
-  .shot { background: var(--surface); border-radius: 13px; box-shadow: var(--shadow); }
-  .hero-shot { border-radius: 15px; }
-  .hero-visual { margin: 8px 0 0; }
-  .hero-visual figcaption { margin-top: 12px; color: var(--text-2); text-align: center; font-size: 13px; }
-  section { padding: 88px 0 0; }
-  h2 { font-size: clamp(27px, 3.4vw, 38px); letter-spacing: -.035em; line-height: 1.2; margin-bottom: 12px; }
-  .lead { max-width: 740px; margin-bottom: 30px; }
-  .features { gap: 14px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .features > div { padding: 23px 24px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); transition: border-color .15s ease; }
-  .features > div:hover { border-color: var(--accent); }
-  .features h3 { font-size: 16px; margin-bottom: 9px; letter-spacing: -.015em; }
-  .features p { font-size: 14px; line-height: 1.65; }
-  .pair { gap: 20px; }
-  .pair figure { min-width: 0; }
-  .pair figure a { display: block; }
-  .pair figcaption { font-size: 13px; }
-  .steps { display: grid; gap: 16px; grid-template-columns: repeat(3, 1fr); counter-reset: step; }
-  .steps article { border-top: 2px solid var(--border); padding-top: 18px; }
-  .steps article::before { counter-increment: step; content: "0" counter(step); font: 750 13px/1.4 ui-monospace, monospace; color: var(--accent); display: block; margin-bottom: 10px; }
-  .steps h3 { margin: 0 0 6px; font-size: 17px; }
-  .steps p { margin: 0; color: var(--text-2); font-size: 14px; }
-  .cols { gap: 20px; }
-  .cols table { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
-  .cols th, .cols td { padding: 11px 13px; }
-  .cols tr:last-child td { border-bottom: 0; }
-  kbd { color: var(--text); background: var(--bg-soft); }
-  .platforms { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .platform { background: var(--surface); border: 1px solid var(--border); border-radius: 15px; padding: 25px; min-width: 0; }
-  .platform h3 { font-size: 20px; margin: 0 0 8px; letter-spacing: -.025em; }
-  .platform p { margin: 0 0 18px; font-size: 14px; color: var(--text-2); min-height: 46px; }
-  .download-links { display: flex; flex-direction: column; align-items: stretch; gap: 9px; }
-  .download-links a { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--accent); text-decoration: none; font-weight: 650; font-size: 14px; overflow-wrap: anywhere; }
-  .download-links a:hover { background: var(--bg-soft); border-color: var(--accent); }
-  .file-size { color: var(--text-2); font-size: 12px; font-weight: 400; white-space: nowrap; }
-  .note { color: var(--text-2); font-size: 14px; padding: 15px 18px; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; margin-top: 20px; }
-  .news { background: var(--surface); border-radius: 14px; padding: 28px 30px; }
-  .news h2 { font-size: 24px; }
-  .privacy { border-top: 1px solid var(--border); padding-top: 25px; }
-  .privacy p { margin-bottom: 0; color: var(--text-2); }
-  footer { margin-top: 72px; }
-  @media (max-width: 900px) {
-    .features { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .platforms { grid-template-columns: 1fr; }
-    .platform p { min-height: 0; }
-    .download-links { flex-direction: row; flex-wrap: wrap; }
+
+  .top {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 20px; padding-block: 21px; border-bottom: 1px solid var(--rule);
   }
+  .brand {
+    display: inline-flex; align-items: center; gap: 10px;
+    color: var(--ink); text-decoration: none; font-size: 19px;
+    font-weight: 720; letter-spacing: -.035em; white-space: nowrap;
+  }
+  .brand img { width: 28px; height: 28px; flex: none; }
+  .desktop-nav { display: flex; flex-wrap: wrap; gap: clamp(12px, 2.2vw, 24px); }
+  nav a { font-size: 13px; font-weight: 590; text-decoration: none; color: var(--muted); }
+  nav a:hover { color: var(--ink); }
+  .mobile-menu { display: none; }
+
+  .hero { max-width: 800px; padding: clamp(46px, 7vw, 80px) 0 37px; }
+  .eyebrow {
+    display: block; margin-bottom: 18px; text-transform: uppercase;
+    color: var(--muted); font-size: 11px; font-weight: 740;
+    letter-spacing: .12em;
+  }
+  h1, h2, h3, p { overflow-wrap: break-word; }
+  h1 {
+    max-width: 780px; margin: 0 0 18px;
+    font-size: clamp(34px, 5.2vw, 58px);
+    line-height: 1.13; letter-spacing: -.052em; font-weight: 680;
+    text-wrap: balance;
+  }
+  .hero p {
+    max-width: 660px; margin: 0 0 25px;
+    color: var(--muted); font-size: clamp(16px, 1.8vw, 19px);
+    line-height: 1.6;
+  }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 23px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 45px; padding: 10px 0; font-weight: 600; font-size: 14px;
+    color: var(--link); text-decoration: underline; text-underline-offset: 4px;
+  }
+  .btn.primary {
+    background: var(--ink); color: var(--page); padding: 10px 17px;
+    border: 1px solid var(--ink); text-decoration: none; border-radius: 4px;
+  }
+  .btn.primary:hover { opacity: .89; }
+  .meta { margin-top: 18px; font-size: 12px; color: var(--muted); }
+
+  figure { margin: 0; min-width: 0; }
+  .hero-visual { width: 100%; }
+  .shot { display: block; width: 100%; max-width: 100%; height: auto; border: 1px solid var(--rule); border-radius: 5px; }
+  figcaption { margin-top: 10px; font-size: 12px; line-height: 1.5; color: var(--muted); }
+
+  section {
+    min-width: 0;
+    padding: clamp(43px, 6vw, 70px) 0 0;
+    margin-top: clamp(43px, 6vw, 70px);
+    border-top: 1px solid var(--rule);
+  }
+  section h2 {
+    margin: 0 0 9px;
+    font-size: clamp(23px, 3vw, 31px); font-weight: 675;
+    line-height: 1.23; letter-spacing: -.038em;
+  }
+  .lead { max-width: 690px; margin: 0 0 27px; color: var(--muted); font-size: 15px; }
+
+  .features { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 44px; }
+  .features > div { min-width: 0; border-top: 1px solid var(--rule); padding: 17px 0 21px; }
+  .features h3, .steps h3 { font-size: 15px; line-height: 1.4; font-weight: 680; margin: 0 0 5px; }
+  .features p, .steps p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.65; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+  .steps article { min-width: 0; padding-top: 16px; border-top: 1px solid var(--rule); }
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .pair figure { min-width: 0; }
+
+  .cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+  table { width: 100%; min-width: 0; table-layout: fixed; border-collapse: collapse; font-size: 13px; }
+  th, td {
+    padding: 11px 8px; border-bottom: 1px solid var(--rule);
+    text-align: left; vertical-align: top; overflow-wrap: anywhere;
+  }
+  th { color: var(--muted); text-transform: uppercase; letter-spacing: .09em; font-size: 10px; font-weight: 750; }
+  th:first-child { width: 54%; }
+  td:first-child { padding-right: 15px; }
+  kbd {
+    display: inline-block; vertical-align: baseline; max-width: 100%;
+    border: 1px solid var(--rule); border-radius: 3px; padding: 2px 5px;
+    font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--ink); background: var(--surface); white-space: nowrap;
+    margin-block: 1px;
+  }
+  code { overflow-wrap: anywhere; font-size: .9em; }
+
+  .platforms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+  .platform { min-width: 0; padding-top: 18px; border-top: 2px solid var(--ink); }
+  .platform h3 { margin: 0 0 6px; font-size: 18px; letter-spacing: -.025em; }
+  .platform p { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0 0 16px; }
+  .download-links { display: flex; min-width: 0; flex-direction: column; gap: 8px; align-items: flex-start; }
+  .download-links a {
+    display: inline-flex; min-width: 0; flex-wrap: wrap; column-gap: 10px;
+    font-size: 13px; line-height: 1.5; overflow-wrap: anywhere;
+  }
+  .file-size { color: var(--muted); font-size: 12px; white-space: nowrap; font-weight: 400; }
+  .note { max-width: 780px; margin: 27px 0 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
+
+  .news { max-width: 810px; }
+  .news ul { margin: 15px 0 0; padding-left: 20px; }
+  .news li { margin-block: 7px; font-size: 14px; }
+  .privacy p { max-width: 770px; margin: 0; font-size: 14px; color: var(--muted); }
+  footer {
+    margin: 70px 0 0; padding: 23px 0 38px;
+    display: flex; gap: 10px 25px; justify-content: space-between;
+    flex-wrap: wrap; border-top: 1px solid var(--rule);
+    color: var(--muted); font-size: 12px;
+  }
+  footer a { color: inherit; }
+
   @media (max-width: 760px) {
-    .wrap { padding: 0 18px; }
+    .wrap { width: min(100% - 36px, 1024px); }
     .desktop-nav { display: none; }
-    .mobile-menu { display: block; position: relative; }
-    .mobile-menu summary { cursor: pointer; list-style: none; background: var(--surface); border: 1px solid var(--border); padding: 8px 13px; border-radius: 9px; font-size: 14px; font-weight: 650; }
+    .top { position: relative; padding-block: 16px; }
+    .mobile-menu { display: block; }
+    .mobile-menu summary {
+      list-style: none; cursor: pointer; user-select: none;
+      padding: 6px 11px; border: 1px solid var(--rule); border-radius: 4px;
+      color: var(--ink); font-size: 13px; font-weight: 650;
+    }
     .mobile-menu summary::-webkit-details-marker { display: none; }
-    .mobile-menu nav { position: absolute; right: 0; top: calc(100% + 8px); display: grid; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; min-width: 170px; box-shadow: var(--shadow); padding: 8px; }
-    .mobile-menu nav a { display: block; margin: 0; padding: 10px 12px; }
-    .hero { padding: 56px 0 31px; }
-    .features { grid-template-columns: 1fr; }
-    .steps { grid-template-columns: 1fr; }
-    section { padding-top: 68px; }
-    .cols { grid-template-columns: 1fr; }
-    .cols table { font-size: 13px; }
-    footer { margin-top: 58px; }
+    .mobile-menu nav {
+      position: absolute; z-index: 10; top: calc(100% - 3px); right: 0;
+      width: min(230px, calc(100vw - 36px)); min-width: 0;
+      padding: 5px 0; border: 1px solid var(--rule);
+      background: var(--surface); box-shadow: 0 8px 22px #00000010;
+    }
+    .mobile-menu nav a {
+      display: block; padding: 9px 14px;
+      margin: 0; font-size: 14px;
+    }
+    .hero { padding-top: 47px; }
+    .features { column-gap: 24px; }
+    .cols { grid-template-columns: 1fr; gap: 14px; }
+    .cols table { table-layout: fixed; }
+    .cols th:first-child { width: 51%; }
+    .platforms { grid-template-columns: 1fr; gap: 25px; }
+    .platform p { margin-bottom: 10px; }
+    .steps { grid-template-columns: 1fr; gap: 19px; }
+  }
+  @media (max-width: 540px) {
+    .features, .pair { grid-template-columns: 1fr; }
+    .features > div { padding-block: 14px 18px; }
+    .pair { gap: 25px; }
+    .hero { padding-top: 39px; }
+    h1 { letter-spacing: -.035em; }
+    section { padding-top: 36px; margin-top: 39px; }
+    footer { margin-top: 52px; }
+  }
+  @media (max-width: 360px) {
+    .wrap { width: min(100% - 28px, 1024px); }
+    .mobile-menu nav { width: min(230px, calc(100vw - 28px)); }
+    .actions { gap: 5px 16px; }
+    .btn { font-size: 13px; }
+    th, td { padding: 8px 5px; }
+    td:first-child { padding-right: 8px; }
   }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
-    .btn { transition: none; }
-    .btn:hover { transform: none; }
   }
+
 </style>
 </head>
 <body>
@@ -248,12 +258,12 @@
   <main id="main">
 
   <div class="hero">
-    <span class="eyebrow">A native editor for your Markdown files</span>
-    <h1>Write Markdown.<br>Stay in flow.</h1>
-    <p>Meet Scribe: a focused desktop editor with side-by-side preview, useful keyboard shortcuts, and files that stay on your computer. For Windows, macOS, and Linux.</p>
+    <span class="eyebrow">Scribe / Markdown editor for desktop</span>
+    <h1>Write Markdown.<br>See the result.</h1>
+    <p>A small, native editor with a live preview, multiple tabs, and practical editing tools. Open and save ordinary Markdown files on your computer.</p>
     <div class="actions">
-      <a class="btn primary" id="download-primary" href="#download">Get Scribe <span aria-hidden="true">↓</span></a>
-      <a class="btn" href="https://github.com/abusuraihsakhri/scribe">Explore the source ↗</a>
+      <a class="btn primary" id="download-primary" href="#download">Download Scribe</a>
+      <a class="btn" href="https://github.com/abusuraihsakhri/scribe">View on GitHub</a>
     </div>
     <div class="meta" id="release-meta" aria-live="polite">Free and open source · Windows, macOS, Linux</div>
   </div>
@@ -263,66 +273,42 @@
       <source srcset="screenshots/split-dark.png" media="(prefers-color-scheme: dark)">
       <img class="shot hero-shot" src="screenshots/split-light.png" width="1280" height="760" fetchpriority="high" decoding="async" alt="Scribe split view showing Markdown source alongside a formatted preview with a task list and table.">
     </picture>
-    <figcaption>Write and preview in one workspace. Screenshot of the desktop application.</figcaption>
+    <figcaption>Split editing view in Scribe for desktop.</figcaption>
   </figure>
 
   <section id="features">
     <h2>What it does</h2>
-    <p class="lead">The essentials for writing and reviewing Markdown, without an account or a complicated workspace.</p>
+    <p class="lead">Editing, previewing, and organizing Markdown files without a cloud workspace.</p>
     <div class="features">
       <div>
-        <h3>Editor, split or preview</h3>
-        <p>Switch layouts with <kbd>Ctrl</kbd> <kbd>1</kbd>, <kbd>2</kbd> and <kbd>3</kbd>. In split view you can drag the divider, and the preview updates as you type.</p>
+        <h3>Live preview</h3>
+        <p>Switch between editor, preview, and a resizable split view. GitHub-flavored Markdown supports tables, tasks, and code highlighting.</p>
       </div>
       <div>
-        <h3>GitHub-flavored Markdown</h3>
-        <p>Tables, task lists and strikethrough render as they do on GitHub. Code blocks get syntax highlighting and a copy button.</p>
-      </div>
-      <div>
-        <h3>Tabs that keep their place</h3>
-        <p>Open as many files as you like. Each tab has its own undo history, cursor and scroll position, and shows a dot when it has unsaved changes.</p>
-      </div>
-      <div>
-        <h3>Command palette</h3>
-        <p><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>P</kbd> lists every command with its shortcut. Type a few letters to filter.</p>
+        <h3>Multiple documents</h3>
+        <p>Keep files open in separate tabs, each with its own cursor position, undo history, and unsaved-change indicator.</p>
       </div>
       <div>
         <h3>Find and replace</h3>
-        <p>Search with match case, whole word or regular expressions, step through matches, and replace one or all.</p>
+        <p>Search by text or regular expression with whole-word and case-sensitive options. Replace one match or all matches.</p>
       </div>
       <div>
-        <h3>Formatting toolbar</h3>
-        <p>Headings, bold, italic, strikethrough, inline code, code blocks, links, images, quotes, lists, checklists, tables and horizontal rules, one click each.</p>
+        <h3>Keyboard-first editing</h3>
+        <p>Use the command palette, formatting toolbar, and automatic continuation for lists and checkboxes.</p>
       </div>
       <div>
-        <h3>Lists that continue themselves</h3>
-        <p>Press Enter in a bullet, numbered or checklist item and the next one starts for you. Enter on an empty item ends the list. <kbd>Tab</kbd> and <kbd>Shift</kbd> <kbd>Tab</kbd> change the indent.</p>
+        <h3>Local file handling</h3>
+        <p>Open files from your file manager, preserve LF/CRLF line endings, and export a document as standalone HTML.</p>
       </div>
       <div>
-        <h3>Your files stay as they were</h3>
-        <p>Scribe remembers whether a file uses Windows (CRLF) or Unix (LF) line endings and saves it the same way, so git doesn't see changes you didn't make.</p>
-      </div>
-      <div>
-        <h3>Safer Markdown preview</h3>
-        <p>Rendered Markdown is sanitized, and local image paths are checked before loading. As with any file, use care with untrusted content and external links.</p>
-      </div>
-      <div>
-        <h3>Opens from your file manager</h3>
-        <p>Double-click a <code>.md</code>, <code>.markdown</code>, <code>.mdown</code> or <code>.mkd</code> file, or drag files onto the window. A second file opens in the running window instead of a new one.</p>
-      </div>
-      <div>
-        <h3>Light, dark or system theme</h3>
-        <p>Follows your system setting by default. Zoom the whole window with <kbd>Ctrl</kbd> <kbd>=</kbd> and <kbd>Ctrl</kbd> <kbd>-</kbd>, or go fullscreen with <kbd>F11</kbd>.</p>
-      </div>
-      <div>
-        <h3>Settings you'd expect</h3>
-        <p>Font, font size, tab size, word wrap, line numbers, current-line highlight, optional autosave, a list of recent files, and export to a standalone HTML page.</p>
+        <h3>Adjustable workspace</h3>
+        <p>Light or dark appearance, type settings, word wrap, line numbers, recent files, and optional autosave.</p>
       </div>
     </div>
   </section>
 
   <section id="workflow">
-    <h2>From download to first draft</h2>
+    <h2>Getting started</h2>
     <p class="lead">No registration, workspace setup, or cloud account required.</p>
     <div class="steps">
       <article><h3>Install the desktop app</h3><p>Choose the package that matches your operating system below.</p></article>
@@ -331,7 +317,7 @@
     </div>
   </section>
 
-  <section aria-label="Application screenshots">
+  <section aria-label="Application screenshots" id="screenshots">
     <div class="pair">
       <figure>
         <img class="shot" src="screenshots/command-palette.png" width="1280" height="760" loading="lazy" alt="The command palette open over the editor, filtered to view commands, with Split View and Preview Mode listed with their shortcuts.">
@@ -398,13 +384,13 @@
 
   <section>
     <div class="news">
-      <h2>New in 0.1.3</h2>
+      <h2>Release 0.1.3</h2>
       <ul>
         <li>Undo no longer moves text from one tab into another.</li>
         <li>Files with Windows line endings no longer show as modified when you haven't changed them, and are saved with their original line endings.</li>
         <li>Autosave no longer opens a Save As dialog for new, unsaved documents.</li>
       </ul>
-      <p style="margin:12px 0 0"><a href="https://github.com/abusuraihsakhri/scribe/blob/main/CHANGELOG.md">Full changelog</a></p>
+      <p><a href="https://github.com/abusuraihsakhri/scribe/blob/main/CHANGELOG.md">Read the changelog</a></p>
     </div>
   </section>
 

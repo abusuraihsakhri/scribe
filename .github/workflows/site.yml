@@ -3,10 +3,10 @@ name: Deploy project site
 on:
   pull_request:
     branches: [main]
-    paths: ['site/**', 'tests/site.test.mjs', '.github/workflows/site.yml']
+    paths: ['site/**', 'tests/site.*', '.github/workflows/site.yml']
   push:
     branches: [main]
-    paths: ['site/**', 'tests/site.test.mjs', '.github/workflows/site.yml']
+    paths: ['site/**', 'tests/site.*', '.github/workflows/site.yml']
   workflow_dispatch:
 
 permissions:
@@ -27,8 +27,24 @@ jobs:
       - name: Test website
         run: node --test tests/site.test.mjs
 
+  browser-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install isolated browser test dependency
+        run: npm install --prefix "$RUNNER_TEMP/scribe-site-browser" --no-audit --no-fund --no-save playwright@1.56.1
+      - name: Install Chromium with system dependencies
+        run: $RUNNER_TEMP/scribe-site-browser/node_modules/.bin/playwright install chromium --with-deps
+      - name: Test responsive layout in Chromium
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/scribe-site-browser/node_modules/playwright
+        run: node tests/site.browser.cjs
+
   deploy:
-    needs: test
+    needs: [test, browser-test]
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
