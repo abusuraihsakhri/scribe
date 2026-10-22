@@ -117,30 +117,36 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     if (!doc.path) {
       return get().saveAs(id);
     }
+    // Stays counted until savedContent is updated, so syncWithDisk never sees the new file with the old baseline.
     savesInFlight++;
     try {
       await writeFile(doc.path, applyLineEnding(doc.content, doc.lineEnding));
+      // Record what was written, not the current content: edits made during the write are still unsaved.
+      set((state) => ({
+        documents: state.documents.map((d) => (d.id === id ? { ...d, savedContent: doc.content } : d)),
+      }));
     } finally {
       savesInFlight--;
     }
-    // Record what was written, not the current content: edits made during the write are still unsaved.
-    set((state) => ({
-      documents: state.documents.map((d) => (d.id === id ? { ...d, savedContent: doc.content } : d)),
-    }));
     return true;
   },
 
   saveAs: async (id) => {
     const doc = get().documents.find((d) => d.id === id);
     if (!doc) return false;
-    const path = await saveFileAs(applyLineEnding(doc.content, doc.lineEnding), doc.path ?? `${doc.title}.md`);
-    if (!path) return false;
-    set((state) => ({
-      documents: state.documents.map((d) =>
-        d.id === id ? { ...d, path, title: titleFromPath(path), savedContent: doc.content } : d,
-      ),
-    }));
-    return true;
+    savesInFlight++;
+    try {
+      const path = await saveFileAs(applyLineEnding(doc.content, doc.lineEnding), doc.path ?? `${doc.title}.md`);
+      if (!path) return false;
+      set((state) => ({
+        documents: state.documents.map((d) =>
+          d.id === id ? { ...d, path, title: titleFromPath(path), savedContent: doc.content } : d,
+        ),
+      }));
+      return true;
+    } finally {
+      savesInFlight--;
+    }
   },
 
   autosaveAll: async () => {
@@ -165,10 +171,10 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       for (const doc of get().documents) {
         if (!doc.path) continue;
         const onDisk = await readDiskVersion(doc.path);
-        if (!onDisk || onDisk.content === doc.savedContent) continue;
-
+        // Compare against fresh state: a save may have finished (or started) while the file was being read.
         const current = get().documents.find((d) => d.id === doc.id);
-        if (!current) continue;
+        if (!onDisk || !current || savesInFlight > 0 || onDisk.content === current.savedContent) continue;
+
         const reload = !isDirty(current) || (await confirmReload(current.title));
         set((state) => ({
           documents: state.documents.map((d) => {

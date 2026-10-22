@@ -163,6 +163,49 @@ describe("external changes", () => {
     expect(isDirty(a)).toBe(true);
   });
 
+  it("does not mistake Scribe's own save, finishing mid-check, for an external edit", async () => {
+    useDocumentsStore.setState({
+      documents: [
+        doc({ id: "a", path: "C:\\notes\\a.md", content: "a", savedContent: "a" }),
+        doc({ id: "b", path: "C:\\notes\\b.md", content: "b2", savedContent: "b1" }),
+      ],
+      activeId: "a",
+    });
+    // While the check reads a.md, b.md is saved; the check then reads b.md's new contents.
+    vi.mocked(fs.openFileAtPath).mockImplementation(async (path) => {
+      if (path.endsWith("a.md")) {
+        await useDocumentsStore.getState().save("b");
+        useDocumentsStore.getState().updateContent("b", "b3");
+        return { ...onDisk("a"), path };
+      }
+      return { ...onDisk("b2"), path };
+    });
+    const confirmReload = vi.fn();
+
+    await useDocumentsStore.getState().syncWithDisk(confirmReload);
+
+    expect(confirmReload).not.toHaveBeenCalled();
+    expect(useDocumentsStore.getState().documents[1]).toMatchObject({ content: "b3", savedContent: "b2" });
+  });
+
+  it("skips the check while a Save As write is in flight", async () => {
+    let finishWrite!: (path: string) => void;
+    vi.mocked(fs.saveFileAs).mockImplementationOnce(() => new Promise<string>((resolve) => { finishWrite = resolve; }));
+    vi.mocked(fs.openFileAtPath).mockResolvedValue(onDisk("new"));
+    useDocumentsStore.setState({
+      documents: [doc({ id: "a", path: "C:\\notes\\a.md", content: "new", savedContent: "old" })],
+      activeId: "a",
+    });
+    const confirmReload = vi.fn();
+
+    const saving = useDocumentsStore.getState().saveAs("a");
+    await useDocumentsStore.getState().syncWithDisk(confirmReload);
+    finishWrite("C:\\notes\\a.md");
+    await saving;
+
+    expect(confirmReload).not.toHaveBeenCalled();
+  });
+
   it("leaves documents alone when their file can't be read", async () => {
     useDocumentsStore.setState({
       documents: [doc({ id: "a", path: "C:\notes\gone.md", content: "old", savedContent: "old" })],
