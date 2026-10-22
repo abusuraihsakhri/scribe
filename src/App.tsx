@@ -22,6 +22,7 @@ import { useUIStore } from "./state/uiStore";
 import { useSettingsStore } from "./settings/settingsStore";
 import { useRecentFilesStore } from "./state/recentFilesStore";
 import { pickAndOpenFiles, openFileAtPath, FileOperationError } from "./filesystem/fs";
+import { useExternalFileChanges } from "./filesystem/useExternalFileChanges";
 import { computeTextStats } from "./utils/textStats";
 import { applyFormat } from "./editor/formatting";
 import { retainEditorStates } from "./editor/CodeEditor";
@@ -77,6 +78,8 @@ export default function App() {
   useEffect(() => {
     document.documentElement.style.fontSize = `${zoom}%`;
   }, [zoom]);
+
+  useExternalFileChanges();
 
   // Autosave
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { EditorDocument } from "./types";
 import { isDirty } from "./types";
-import { saveFileAs, writeFile, type OpenedFile } from "../filesystem/fs";
+import { openFileAtPath, saveFileAs, writeFile, type OpenedFile } from "../filesystem/fs";
 import { applyLineEnding } from "../utils/lineEndings";
 
 let untitledCounter = 1;
@@ -38,9 +38,25 @@ interface DocumentsState {
   saveAs: (id: string) => Promise<boolean>;
   /** Saves every modified document that already has a file. Untitled documents are skipped so autosave never opens a dialog. */
   autosaveAll: () => Promise<void>;
-  /** Reloads a document's content from an externally-modified file on disk. */
-  reloadFromDisk: (id: string, content: string) => void;
+  /**
+   * Compares every open file with its copy on disk. Unmodified documents are reloaded silently;
+   * for documents with unsaved edits, confirmReload decides whether the disk version wins.
+   */
+  syncWithDisk: (confirmReload: (title: string) => Promise<boolean>) => Promise<void>;
 }
+
+/** Reads the file at doc.path, or null if it is gone or unreadable (e.g. deleted or on an unplugged drive). */
+async function readDiskVersion(path: string): Promise<OpenedFile | null> {
+  try {
+    return await openFileAtPath(path);
+  } catch {
+    return null;
+  }
+}
+
+// While a save is in flight the disk briefly differs from savedContent; don't mistake that for an external edit.
+let savesInFlight = 0;
+let syncing = false;
 
 export const useDocumentsStore = create<DocumentsState>((set, get) => ({
   documents: [],
@@ -101,7 +117,12 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     if (!doc.path) {
       return get().saveAs(id);
     }
-    await writeFile(doc.path, applyLineEnding(doc.content, doc.lineEnding));
+    savesInFlight++;
+    try {
+      await writeFile(doc.path, applyLineEnding(doc.content, doc.lineEnding));
+    } finally {
+      savesInFlight--;
+    }
     // Record what was written, not the current content: edits made during the write are still unsaved.
     set((state) => ({
       documents: state.documents.map((d) => (d.id === id ? { ...d, savedContent: doc.content } : d)),
@@ -125,6 +146,9 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
   autosaveAll: async () => {
     const pending = get().documents.filter((d) => d.path && isDirty(d));
     for (const doc of pending) {
+      // Another program changed the file since we last read it: leave it for syncWithDisk to ask about.
+      const onDisk = await readDiskVersion(doc.path!);
+      if (onDisk && onDisk.content !== doc.savedContent) continue;
       try {
         await get().save(doc.id);
       } catch (err) {
@@ -134,10 +158,31 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     }
   },
 
-  reloadFromDisk: (id, content) => {
-    set((state) => ({
-      documents: state.documents.map((d) => (d.id === id ? { ...d, content, savedContent: content } : d)),
-    }));
+  syncWithDisk: async (confirmReload) => {
+    if (syncing || savesInFlight > 0) return;
+    syncing = true;
+    try {
+      for (const doc of get().documents) {
+        if (!doc.path) continue;
+        const onDisk = await readDiskVersion(doc.path);
+        if (!onDisk || onDisk.content === doc.savedContent) continue;
+
+        const current = get().documents.find((d) => d.id === doc.id);
+        if (!current) continue;
+        const reload = !isDirty(current) || (await confirmReload(current.title));
+        set((state) => ({
+          documents: state.documents.map((d) => {
+            if (d.id !== doc.id) return d;
+            // Keeping edits: the disk version becomes the baseline, so the tab stays dirty and the next save overwrites it.
+            return reload
+              ? { ...d, content: onDisk.content, savedContent: onDisk.content, lineEnding: onDisk.lineEnding }
+              : { ...d, savedContent: onDisk.content };
+          }),
+        }));
+      }
+    } finally {
+      syncing = false;
+    }
   },
 }));
 

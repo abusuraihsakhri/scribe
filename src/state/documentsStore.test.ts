@@ -4,6 +4,7 @@ import type { EditorDocument } from "./types";
 vi.mock("../filesystem/fs", () => ({
   writeFile: vi.fn(),
   saveFileAs: vi.fn(),
+  openFileAtPath: vi.fn(),
 }));
 
 const fs = await import("../filesystem/fs");
@@ -16,6 +17,7 @@ function doc(overrides: Partial<EditorDocument>): EditorDocument {
 beforeEach(() => {
   vi.mocked(fs.writeFile).mockReset().mockResolvedValue(undefined);
   vi.mocked(fs.saveFileAs).mockReset().mockResolvedValue(null);
+  vi.mocked(fs.openFileAtPath).mockReset().mockRejectedValue(new Error("not found"));
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
@@ -98,5 +100,77 @@ describe("autosaveAll", () => {
     const [a, b] = useDocumentsStore.getState().documents;
     expect(isDirty(a)).toBe(true);
     expect(isDirty(b)).toBe(false);
+  });
+});
+
+describe("external changes", () => {
+  const onDisk = (content: string) => ({ path: "C:\notes\a.md", name: "a.md", content, lineEnding: "lf" as const });
+
+  it("autosave skips a file that another program changed, so it is not overwritten", async () => {
+    vi.mocked(fs.openFileAtPath).mockResolvedValue(onDisk("edited elsewhere"));
+    useDocumentsStore.setState({
+      documents: [doc({ id: "a", path: "C:\notes\a.md", content: "mine", savedContent: "original" })],
+      activeId: "a",
+    });
+
+    await useDocumentsStore.getState().autosaveAll();
+
+    expect(fs.writeFile).not.toHaveBeenCalled();
+  });
+
+  it("reloads an unmodified document without asking", async () => {
+    vi.mocked(fs.openFileAtPath).mockResolvedValue(onDisk("new"));
+    useDocumentsStore.setState({
+      documents: [doc({ id: "a", path: "C:\notes\a.md", content: "old", savedContent: "old" })],
+      activeId: "a",
+    });
+    const confirmReload = vi.fn();
+
+    await useDocumentsStore.getState().syncWithDisk(confirmReload);
+
+    expect(confirmReload).not.toHaveBeenCalled();
+    expect(useDocumentsStore.getState().documents[0]).toMatchObject({ content: "new", savedContent: "new" });
+  });
+
+  it("asks before replacing unsaved edits, and reloads when confirmed", async () => {
+    vi.mocked(fs.openFileAtPath).mockResolvedValue(onDisk("new"));
+    useDocumentsStore.setState({
+      documents: [doc({ id: "a", path: "C:\notes\a.md", title: "a.md", content: "mine", savedContent: "old" })],
+      activeId: "a",
+    });
+    const confirmReload = vi.fn().mockResolvedValue(true);
+
+    await useDocumentsStore.getState().syncWithDisk(confirmReload);
+
+    expect(confirmReload).toHaveBeenCalledWith("a.md");
+    expect(useDocumentsStore.getState().documents[0]).toMatchObject({ content: "new", savedContent: "new" });
+  });
+
+  it("keeps unsaved edits when declined, and does not ask again for the same disk version", async () => {
+    vi.mocked(fs.openFileAtPath).mockResolvedValue(onDisk("new"));
+    useDocumentsStore.setState({
+      documents: [doc({ id: "a", path: "C:\notes\a.md", content: "mine", savedContent: "old" })],
+      activeId: "a",
+    });
+    const confirmReload = vi.fn().mockResolvedValue(false);
+
+    await useDocumentsStore.getState().syncWithDisk(confirmReload);
+    await useDocumentsStore.getState().syncWithDisk(confirmReload);
+
+    expect(confirmReload).toHaveBeenCalledTimes(1);
+    const [a] = useDocumentsStore.getState().documents;
+    expect(a).toMatchObject({ content: "mine", savedContent: "new" });
+    expect(isDirty(a)).toBe(true);
+  });
+
+  it("leaves documents alone when their file can't be read", async () => {
+    useDocumentsStore.setState({
+      documents: [doc({ id: "a", path: "C:\notes\gone.md", content: "old", savedContent: "old" })],
+      activeId: "a",
+    });
+
+    await useDocumentsStore.getState().syncWithDisk(vi.fn());
+
+    expect(useDocumentsStore.getState().documents[0].content).toBe("old");
   });
 });
