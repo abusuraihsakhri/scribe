@@ -432,6 +432,11 @@ li + li { margin-top: 0.25em; }
     void openFilesAtPaths(paths).then(addOpenedFiles);
   });
 
+  // Links to other Markdown files in the preview
+  const handleOpenLinkedFile = useCallback((path: string) => {
+    void openFilesAtPaths([path]).then(addOpenedFiles);
+  }, [addOpenedFiles]);
+
   // Window close guard
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -534,6 +539,7 @@ li + li { margin-top: 0.25em; }
               editorHighlightLine={settings.editorHighlightLine}
               editorTabSize={settings.editorTabSize}
               docPath={activeDoc.path}
+              onOpenFile={handleOpenLinkedFile}
             />
           ) : (
             <WelcomeScreen
