@@ -1,5 +1,6 @@
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import { invoke } from "@tauri-apps/api/core";
+import { readTextFile } from "@tauri-apps/plugin-fs";
 import type { LineEnding } from "../state/types";
 import { detectLineEnding, normalizeLineEndings } from "../utils/lineEndings";
 
@@ -73,10 +74,10 @@ export async function openFileAtPath(path: string): Promise<OpenedFile> {
   }
 }
 
-/** Writes content to an already-known path. */
+/** Writes content to an already-known path, atomically (temp file + rename) so a crash never truncates it. */
 export async function writeFile(path: string, content: string): Promise<void> {
   try {
-    await writeTextFile(path, content);
+    await invoke("write_text_file_atomic", { path, contents: content });
   } catch (error) {
     throw new FileOperationError(toUserMessage(error), error);
   }
