@@ -133,6 +133,23 @@ section { min-width: 0; scroll-margin-top: 84px; margin-top: clamp(48px,5.7vw,76
 .workflow h3 { margin: 0 0 4px; font-size: 15px; }
 .workflow p { margin: 0; color: var(--muted); font-size: 13px; }
 
+
+/* Source-checked platform comparison */
+.comparison-wrap { min-width: 0; border-top: 2px solid var(--ink); }
+.compare-table { table-layout: fixed; width: 100%; min-width: 0; border-collapse: collapse; }
+.compare-table th, .compare-table td {
+  padding: 13px 14px; text-align: left; vertical-align: top;
+  border-bottom: 1px solid var(--line); overflow-wrap: anywhere;
+  font-size: 12px; line-height: 1.6;
+}
+.compare-table thead th { color: var(--ink); background: var(--paper-alt); font-size: 11px; letter-spacing: 0; text-transform: none; }
+.compare-table thead th:first-child { width: 17%; }
+.compare-table thead th:nth-child(2) { width: 27%; }
+.compare-table tbody th { width: auto; font-size: 12px; color: var(--ink); font-weight: 700; }
+.compare-table tbody td { color: var(--muted); }
+.compare-table tbody td:nth-child(2) { color: var(--ink); background: var(--panel); }
+.compare-note { max-width: 990px; color: var(--faint); margin: 13px 0 0; font-size: 12px; line-height: 1.65; }
+
 /* Keyboard reference */
 .shortcut-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 32px; }
 table { width: 100%; min-width: 0; border-collapse: collapse; table-layout: fixed; font-size: 12px; }
@@ -217,6 +234,16 @@ kbd { display: inline-block; max-width: 100%; border: 1px solid var(--line); bac
   .theme-toggle span { font-size: 11px; }
   .navbar { gap: 7px; }
   .nav-actions { gap: 5px; }
+}
+
+@media (max-width: 700px) {
+  .compare-table, .compare-table tbody, .compare-table tbody tr { display: block; width: 100%; }
+  .compare-table thead { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+  .compare-table tbody tr { padding: 12px 0 13px; border-bottom: 1px solid var(--line); }
+  .compare-table tbody th { display: block; width: 100%; padding: 0 0 8px; border: 0; font-size: 14px; }
+  .compare-table tbody td { display: block; width: 100%; padding: 5px 0 5px 0; border: 0; background: transparent !important; }
+  .compare-table tbody td::before { content: attr(data-label); display: block; color: var(--faint); font: 10px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; letter-spacing: .04em; margin-bottom: 1px; }
+  .compare-table tbody td:nth-child(2) { color: var(--ink); }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
