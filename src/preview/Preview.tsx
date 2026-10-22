@@ -7,6 +7,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { previewSanitizeSchema } from "../markdown/sanitizeSchema";
 import { CodeBlock } from "./CodeBlock";
+import { isAbsolutePath, resolveRelativePath } from "../utils/paths";
 
 interface PreviewProps {
   content: string;
@@ -42,32 +43,25 @@ function resolveImagePath(src: string | undefined, basePath?: string): string | 
     return undefined;
   }
 
-  // If no base path is known (e.g. unsaved untitled document), relative local file cannot be resolved safely
-  if (!basePath) return undefined;
-
-  // Block directory traversal (both plain and URL-encoded)
-  let decoded = trimmed;
+  // Markdown image paths are URL-encoded ("my%20image.png")
+  let decoded: string;
   try {
     decoded = decodeURIComponent(trimmed);
   } catch {
     return undefined;
   }
-  if (decoded.includes("..") || trimmed.includes("..")) {
-    return undefined;
-  }
 
-  // Normalize path separators and combine with document basePath
-  const separator = basePath.includes("\\") ? "\\" : "/";
-  const cleanBase = basePath.endsWith(separator) ? basePath : basePath + separator;
-  const cleanSrc = trimmed.replace(/^\.[/\\]/, "");
-  const fullPath = cleanBase + cleanSrc;
-
-  // Use Tauri's official convertFileSrc for asset protocol mapping
-  try {
-    return convertFileSrc(fullPath);
-  } catch {
-    return `asset://localhost/${encodeURIComponent(fullPath).replace(/%2F/g, "/").replace(/%5C/g, "/")}`;
+  // Which files may actually load is enforced by the assetProtocol scope in tauri.conf.json
+  // (image extensions only, sensitive folders denied), so ".." is allowed here.
+  let fullPath: string | null;
+  if (isAbsolutePath(decoded)) {
+    fullPath = decoded;
+  } else {
+    // An unsaved document has no folder to resolve against
+    if (!basePath) return undefined;
+    fullPath = resolveRelativePath(basePath, decoded);
   }
+  return fullPath ? convertFileSrc(fullPath) : undefined;
 }
 
 function handleLinkClick(e: React.MouseEvent<HTMLAnchorElement>, href: string | undefined) {
