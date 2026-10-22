@@ -27,7 +27,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
         const data = await page.evaluate(() => {
           const width = document.documentElement.clientWidth;
           const bad = Array.from(document.querySelectorAll(
-            ".wrap, .topbar, .navbar, main, .hero, .hero-copy, .hero-media, .hero-facts, .showcase, section, .section-head, .feature-grid, .figure-grid, .workflow, .shortcut-grid, .download-grid, .platform, .release-privacy, footer, img, table"
+            ".wrap, .topbar, .navbar, main, .hero, .hero-copy, .hero-media, .hero-facts, .showcase, section, .section-head, .feature-grid, .figure-grid, .comparison-wrap, .compare-table, .compare-table tbody tr, .workflow, .shortcut-grid, .download-grid, .platform, .release-privacy, footer, img, table"
           )).filter(el => {
             const r = el.getBoundingClientRect();
             if (!r.width || !r.height) return false;
@@ -57,6 +57,12 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
           width + "px screenshot does not match selected theme");
         assert.ok(data.images.every(img => img.loaded),
           width + "px " + theme + " image did not load: " + JSON.stringify(data.images));
+
+        assert.equal(await page.locator(".compare-table tbody tr").count(), 5);
+        const compareLayout = await page.locator(".compare-table tbody tr").first()
+          .evaluate(el => getComputedStyle(el).display);
+        assert.equal(compareLayout, width <= 700 ? "block" : "table-row",
+          width + "px comparison layout should fit the viewport");
 
         if (width <= 820) {
           const menu = page.locator(".mobile-menu");
