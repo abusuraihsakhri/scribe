@@ -39,6 +39,7 @@
       </a>
       <nav class="desktop-nav" aria-label="Primary navigation">
         <a href="#features">Features</a>
+        <a href="#compare">Compare</a>
         <a href="#workspace">Workspace</a>
         <a href="#shortcuts">Shortcuts</a>
         <a href="#download">Download</a>
@@ -54,6 +55,7 @@
           <summary>Menu</summary>
           <nav aria-label="Mobile navigation">
             <a href="#features">Features</a>
+        <a href="#compare">Compare</a>
             <a href="#workspace">Workspace</a>
             <a href="#shortcuts">Shortcuts</a>
             <a href="#download">Download</a>
@@ -101,12 +103,72 @@
         <article class="feature"><h3>Search and replace</h3><p>Navigate matches and replace text using case, whole-word, or regular-expression options.</p></article>
         <article class="feature"><h3>Quick formatting</h3><p>Toolbar actions, a searchable command palette, and automatic continuation for lists and checkboxes.</p></article>
         <article class="feature"><h3>Local files</h3><p>Open from your file manager, preserve LF/CRLF line endings, and export rendered Markdown as HTML.</p></article>
+
+        <article class="feature"><h3>Typing assistance</h3><p>Auto-close brackets, continue lists and quotes, and indent with Tab or Shift+Tab.</p></article>
+        <article class="feature"><h3>Save safeguards</h3><p>Warn before closing unsaved changes, optionally autosave existing files, and preserve per-tab undo history.</p></article>
+        <article class="feature"><h3>Editor preferences</h3><p>Choose fonts, wrapping, line numbers, and light, dark, or system themes. Check word, character, and cursor counts.</p></article>
       </div>
+    </section>
+
+
+    <section id="compare" aria-labelledby="compare-title">
+      <div class="section-head">
+        <span class="section-label">02 / Comparison</span>
+        <div>
+          <h2 id="compare-title">How Scribe compares.</h2>
+          <p>Compare the workflows and runtimes, rather than unmeasured speed claims. Capabilities of other editors vary by product.</p>
+        </div>
+      </div>
+      <div class="comparison-wrap">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th scope="col">Consideration</th>
+              <th scope="col">Scribe</th>
+              <th scope="col">Electron desktop editors</th>
+              <th scope="col">Browser-based editors</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Runtime</th>
+              <td data-label="Scribe">Tauri 2 uses the operating system's webview.</td>
+              <td data-label="Electron desktop editors">Electron includes Chromium and Node.js.</td>
+              <td data-label="Browser-based editors">Runs inside an installed web browser.</td>
+            </tr>
+            <tr>
+              <th scope="row">Local files</th>
+              <td data-label="Scribe">Native open and save dialogs for Markdown files.</td>
+              <td data-label="Electron desktop editors">Local file access depends on the editor.</td>
+              <td data-label="Browser-based editors">Local file access depends on the site and browser permissions.</td>
+            </tr>
+            <tr>
+              <th scope="row">Without internet</th>
+              <td data-label="Scribe">Edit and save local documents after installation.</td>
+              <td data-label="Electron desktop editors">Many work offline; features vary.</td>
+              <td data-label="Browser-based editors">Offline editing is possible when the site supports it.</td>
+            </tr>
+            <tr>
+              <th scope="row">Account</th>
+              <td data-label="Scribe">No sign-in required to edit local files.</td>
+              <td data-label="Electron desktop editors">Depends on the application.</td>
+              <td data-label="Browser-based editors">Depends on the application.</td>
+            </tr>
+            <tr>
+              <th scope="row">Editing workflow</th>
+              <td data-label="Scribe">Tabs, live split preview, find and replace, and command palette.</td>
+              <td data-label="Electron desktop editors">Feature set varies by editor.</td>
+              <td data-label="Browser-based editors">Feature set varies by editor.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="compare-note">This is a comparison of implementation and available features, not a performance benchmark. Startup time, RAM use, and keystroke latency have not been measured in a reproducible cross-editor test. Remote images in Markdown may still need an internet connection. Runtime details: <a href="https://v2.tauri.app/concept/process-model/">Tauri documentation</a> and <a href="https://www.electronjs.org/docs/latest/">Electron documentation</a>.</p>
     </section>
 
     <section id="workspace">
       <div class="section-head">
-        <span class="section-label">02 / Workspace</span>
+        <span class="section-label">03 / Workspace</span>
         <div><h2>A familiar editing environment.</h2><p>Work with the keyboard or use on-screen controls. The workspace supports light, dark, and system appearance settings.</p></div>
       </div>
       <div class="figure-grid">
@@ -123,7 +185,7 @@
 
     <section id="workflow">
       <div class="section-head">
-        <span class="section-label">03 / Start here</span>
+        <span class="section-label">04 / Start here</span>
         <div><h2>Open a file and start writing.</h2><p>No account or workspace setup is required.</p></div>
       </div>
       <div class="workflow">
@@ -135,7 +197,7 @@
 
     <section id="shortcuts">
       <div class="section-head">
-        <span class="section-label">04 / Keyboard</span>
+        <span class="section-label">05 / Keyboard</span>
         <div><h2>Commands when you need them.</h2><p>Use <kbd>Cmd</kbd> instead of <kbd>Ctrl</kbd> on macOS. These shortcuts work in the desktop editor.</p></div>
       </div>
       <div class="shortcut-grid">
@@ -170,7 +232,7 @@
 
     <section id="download">
       <div class="section-head">
-        <span class="section-label">05 / Release</span>
+        <span class="section-label">06 / Release</span>
         <div><h2>Download Scribe.</h2><p id="download-lead">Choose a package below. All builds are available on the <a href="https://github.com/abusuraihsakhri/scribe/releases/latest">latest GitHub release</a>.</p></div>
       </div>
       <div class="download-grid" aria-label="Download options">
