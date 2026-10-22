@@ -19,6 +19,42 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
+describe("save", () => {
+  it("keeps edits made during the write marked as unsaved", async () => {
+    let finishWrite!: () => void;
+    vi.mocked(fs.writeFile).mockImplementationOnce(() => new Promise<void>((resolve) => { finishWrite = resolve; }));
+    useDocumentsStore.setState({
+      documents: [doc({ id: "a", path: "C:\\notes\\a.md", content: "v1", savedContent: "v0" })],
+      activeId: "a",
+    });
+
+    const saving = useDocumentsStore.getState().save("a");
+    useDocumentsStore.getState().updateContent("a", "v2");
+    finishWrite();
+    await saving;
+
+    const [a] = useDocumentsStore.getState().documents;
+    expect(fs.writeFile).toHaveBeenCalledWith("C:\\notes\\a.md", "v1");
+    expect(a.savedContent).toBe("v1");
+    expect(isDirty(a)).toBe(true);
+  });
+
+  it("keeps edits made while the Save As dialog is open marked as unsaved", async () => {
+    let choosePath!: (path: string) => void;
+    vi.mocked(fs.saveFileAs).mockImplementationOnce(() => new Promise<string>((resolve) => { choosePath = resolve; }));
+    useDocumentsStore.setState({ documents: [doc({ id: "u", content: "v1" })], activeId: "u" });
+
+    const saving = useDocumentsStore.getState().saveAs("u");
+    useDocumentsStore.getState().updateContent("u", "v2");
+    choosePath("C:\\notes\\new.md");
+    await saving;
+
+    const [u] = useDocumentsStore.getState().documents;
+    expect(u.savedContent).toBe("v1");
+    expect(isDirty(u)).toBe(true);
+  });
+});
+
 describe("autosaveAll", () => {
   it("never opens a Save As dialog for untitled documents", async () => {
     useDocumentsStore.setState({ documents: [doc({ id: "u", content: "draft" })], activeId: "u" });

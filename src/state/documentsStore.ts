@@ -102,8 +102,9 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       return get().saveAs(id);
     }
     await writeFile(doc.path, applyLineEnding(doc.content, doc.lineEnding));
+    // Record what was written, not the current content: edits made during the write are still unsaved.
     set((state) => ({
-      documents: state.documents.map((d) => (d.id === id ? { ...d, savedContent: d.content } : d)),
+      documents: state.documents.map((d) => (d.id === id ? { ...d, savedContent: doc.content } : d)),
     }));
     return true;
   },
@@ -115,7 +116,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     if (!path) return false;
     set((state) => ({
       documents: state.documents.map((d) =>
-        d.id === id ? { ...d, path, title: titleFromPath(path), savedContent: d.content } : d,
+        d.id === id ? { ...d, path, title: titleFromPath(path), savedContent: doc.content } : d,
       ),
     }));
     return true;
