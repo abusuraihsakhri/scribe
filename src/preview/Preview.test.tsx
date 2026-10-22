@@ -85,6 +85,16 @@ describe("Preview images", () => {
     expect(host.querySelector("img")?.getAttribute("src")).toBe("asset://localhost/C:\\docs\\assets\\logo.png");
   });
 
+  it("retries a failed local image once with a cache-busting query", () => {
+    const host = render("![logo](logo.png)", { basePath: "C:\\docs" });
+    const img = host.querySelector("img")!;
+
+    act(() => img.dispatchEvent(new Event("error")));
+    act(() => img.dispatchEvent(new Event("error")));
+
+    expect(img.getAttribute("src")).toBe("asset://localhost/C:\\docs\\logo.png?retry=1");
+  });
+
   it("drops UNC images, which would leak credentials over SMB", () => {
     const host = render("![x](//attacker/share/x.png)", { basePath: "C:\\docs" });
     expect(host.querySelector("img")).toBeNull();
