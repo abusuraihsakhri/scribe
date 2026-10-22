@@ -98,11 +98,11 @@
       </div>
       <div class="feature-grid">
         <article class="feature"><h3>Editor and preview</h3><p>Switch between editor-only, split, and preview-only layouts. Resize the split divider as you work.</p></article>
-        <article class="feature"><h3>GitHub-flavored Markdown</h3><p>Tables, task lists, strikethrough, and syntax-highlighted code blocks, including a copy action.</p></article>
+        <article class="feature"><h3>GitHub-flavored Markdown</h3><p>Tables, task lists, strikethrough, and syntax-highlighted code blocks with a copy action. Local images render, and links to other Markdown files or headings work.</p></article>
         <article class="feature"><h3>Tabbed documents</h3><p>Open several files; each keeps its own undo history, cursor position, and unsaved-change indicator.</p></article>
         <article class="feature"><h3>Search and replace</h3><p>Navigate matches and replace text using case, whole-word, or regular-expression options.</p></article>
         <article class="feature"><h3>Quick formatting</h3><p>Toolbar actions, a searchable command palette, and automatic continuation for lists and checkboxes.</p></article>
-        <article class="feature"><h3>Local files</h3><p>Open from your file manager, preserve LF/CRLF line endings, and export rendered Markdown as HTML.</p></article>
+        <article class="feature"><h3>Local files</h3><p>Open from your file manager, preserve LF/CRLF line endings, and export rendered Markdown as HTML. Saves are atomic, and edits made in other programs are picked up when you switch back.</p></article>
 
         <article class="feature"><h3>Typing assistance</h3><p>Auto-close brackets, continue lists and quotes, and indent with Tab or Shift+Tab.</p></article>
         <article class="feature"><h3>Save safeguards</h3><p>Warn before closing unsaved changes, optionally autosave existing files, and preserve per-tab undo history.</p></article>
@@ -255,11 +255,12 @@
       <p class="note">Installers are not currently code-signed; Windows or macOS may display an unverified publisher warning. Verify the source and release before installing. GitHub Pages hosts this product page, not an online editor.</p>
       <div class="release-privacy">
         <article>
-          <h3>Release 0.1.3</h3>
+          <h3>Release 0.1.4</h3>
           <ul>
-            <li>Corrected undo behavior across document tabs.</li>
-            <li>Preserved Windows CRLF line endings when saving.</li>
-            <li>Stopped autosave from prompting for unsaved new files.</li>
+            <li>Kept text typed during a save from being marked as saved.</li>
+            <li>Made saves atomic, so a crash can no longer empty a file.</li>
+            <li>Reloaded files changed by other programs instead of overwriting them.</li>
+            <li>Showed local images and opened Markdown and heading links in the preview.</li>
           </ul>
           <a href="https://github.com/abusuraihsakhri/scribe/blob/main/CHANGELOG.md">Read the changelog ↗</a>
         </article>
