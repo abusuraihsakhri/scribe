@@ -19,11 +19,12 @@ interface WorkspaceProps {
   editorHighlightLine?: boolean;
   editorTabSize?: number;
   docPath?: string | null;
+  onOpenFile?: (path: string) => void;
 }
 
 const PREVIEW_DEBOUNCE_MS = 150;
 
-export function Workspace({ viewMode, docId, content, onChange, editorRef, onCursorInfo, editorFontSize, editorFontFamily, editorWordWrap, editorLineNumbers, editorHighlightLine, editorTabSize, docPath }: WorkspaceProps) {
+export function Workspace({ viewMode, docId, content, onChange, editorRef, onCursorInfo, editorFontSize, editorFontFamily, editorWordWrap, editorLineNumbers, editorHighlightLine, editorTabSize, docPath, onOpenFile }: WorkspaceProps) {
   const debouncedContent = useDebouncedValue(content, PREVIEW_DEBOUNCE_MS);
   const [splitRatio, setSplitRatio] = useState(0.5);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -68,7 +69,7 @@ export function Workspace({ viewMode, docId, content, onChange, editorRef, onCur
 
   const previewPane = (
     <div className="h-full min-w-0 overflow-y-auto" style={{ background: "var(--bg-surface)" }}>
-      <Preview content={debouncedContent} basePath={basePath} />
+      <Preview content={debouncedContent} basePath={basePath} onOpenFile={onOpenFile} />
     </div>
   );
 

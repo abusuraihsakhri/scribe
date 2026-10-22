@@ -3,7 +3,6 @@ import type { EditorView } from "@codemirror/view";
 import { undo, redo } from "@codemirror/commands";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
 import { message } from "@tauri-apps/plugin-dialog";
 import { Toolbar } from "./components/Toolbar";
 import { FormattingToolbar } from "./components/FormattingToolbar";
@@ -21,7 +20,9 @@ import { useDocumentsStore, isDirty } from "./state/documentsStore";
 import { useUIStore } from "./state/uiStore";
 import { useSettingsStore } from "./settings/settingsStore";
 import { useRecentFilesStore } from "./state/recentFilesStore";
-import { pickAndOpenFiles, openFileAtPath, FileOperationError } from "./filesystem/fs";
+import { pickAndOpenFiles, openFileAtPath, openFilesAtPaths, FileOperationError, type OpenResult } from "./filesystem/fs";
+import { useOpenFileRequests } from "./filesystem/useOpenFileRequests";
+import { useExternalFileChanges } from "./filesystem/useExternalFileChanges";
 import { computeTextStats } from "./utils/textStats";
 import { applyFormat } from "./editor/formatting";
 import { retainEditorStates } from "./editor/CodeEditor";
@@ -78,6 +79,8 @@ export default function App() {
     document.documentElement.style.fontSize = `${zoom}%`;
   }, [zoom]);
 
+  useExternalFileChanges();
+
   // Autosave
   useEffect(() => {
     if (!settings.autosave) return;
@@ -96,17 +99,27 @@ export default function App() {
     newDocument();
   }, [newDocument]);
 
+  // Adds opened files as tabs and reports any that couldn't be read in a single dialog.
+  const addOpenedFiles = useCallback(async ({ files, failed }: OpenResult) => {
+    for (const f of files) {
+      openFromDisk(f);
+      addRecent(f.path, f.name);
+    }
+    if (failed.length > 0) {
+      await message(failed.map((f) => `${f.name}: ${f.message}`).join("\n"), {
+        title: failed.length === 1 ? "Couldn't open file" : "Couldn't open some files",
+        kind: "error",
+      });
+    }
+  }, [openFromDisk, addRecent]);
+
   const handleOpen = useCallback(async () => {
     try {
-      const files = await pickAndOpenFiles();
-      files.forEach((f) => {
-        openFromDisk(f);
-        addRecent(f.path, f.name);
-      });
+      await addOpenedFiles(await pickAndOpenFiles());
     } catch (err) {
       await showError("Couldn't open file", err);
     }
-  }, [openFromDisk, showError, addRecent]);
+  }, [addOpenedFiles, showError]);
 
   const handleOpenRecent = useCallback(async (path: string) => {
     try {
@@ -415,74 +428,14 @@ li + li { margin-top: 0.25em; }
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [handleNew, handleOpen, handleSave, handleSaveAs, handleCloseDocument, activeId, toggleSidebar, setViewMode, handleFullscreen, showCommandPalette]);
 
-  // Native drag-and-drop
-  useEffect(() => {
-    let unlisten: (() => void) | undefined;
-    void getCurrentWindow()
-      .onDragDropEvent(async (event) => {
-        if (event.payload.type !== "drop") return;
-        for (const path of event.payload.paths) {
-          if (!/\.(md|markdown|mdown|mkd)$/i.test(path)) continue;
-          try {
-            const file = await openFileAtPath(path);
-            openFromDisk(file);
-            addRecent(file.path, file.name);
-          } catch (err) {
-            await showError("Couldn't open file", err);
-          }
-        }
-      })
-      .then((fn) => { unlisten = fn; });
-    return () => unlisten?.();
-  }, [openFromDisk, showError, addRecent]);
+  useOpenFileRequests((paths) => {
+    void openFilesAtPaths(paths).then(addOpenedFiles);
+  });
 
-  // Open files passed via CLI arguments (e.g. double clicking a .md file associated with Scribe)
-  useEffect(() => {
-    const handlePaths = async (paths: string[]) => {
-      for (let rawPath of paths) {
-        rawPath = rawPath.trim().replace(/^["']|["']$/g, "");
-        if (!rawPath || rawPath.startsWith("-")) continue;
-        if (/\.(exe|app)$/i.test(rawPath)) continue;
-        try {
-          const file = await openFileAtPath(rawPath);
-          openFromDisk(file);
-          addRecent(file.path, file.name);
-        } catch (err) {
-          console.error("Failed to open file from argument:", rawPath, err);
-        }
-      }
-    };
-
-    // 1. Initial launch CLI args
-    void (async () => {
-      try {
-        const args = await invoke<string[]>("get_cli_args");
-        if (args && args.length > 1) {
-          await handlePaths(args.slice(1));
-        }
-      } catch (err) {
-        console.error("Failed to get CLI args:", err);
-      }
-    })();
-
-    // 2. Subsequent file opens while app is running (single-instance event)
-    let unlisten: (() => void) | undefined;
-    void (async () => {
-      try {
-        unlisten = await listen<string[]>("open-file-argument", (event) => {
-          if (Array.isArray(event.payload)) {
-            void handlePaths(event.payload.slice(1));
-          }
-        });
-      } catch (err) {
-        console.error("Failed to listen for open-file-argument:", err);
-      }
-    })();
-
-    return () => {
-      unlisten?.();
-    };
-  }, [openFromDisk, addRecent]);
+  // Links to other Markdown files in the preview
+  const handleOpenLinkedFile = useCallback((path: string) => {
+    void openFilesAtPaths([path]).then(addOpenedFiles);
+  }, [addOpenedFiles]);
 
   // Window close guard
   useEffect(() => {
@@ -586,6 +539,7 @@ li + li { margin-top: 0.25em; }
               editorHighlightLine={settings.editorHighlightLine}
               editorTabSize={settings.editorTabSize}
               docPath={activeDoc.path}
+              onOpenFile={handleOpenLinkedFile}
             />
           ) : (
             <WelcomeScreen

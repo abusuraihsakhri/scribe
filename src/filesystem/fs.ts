@@ -1,5 +1,6 @@
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import { invoke } from "@tauri-apps/api/core";
+import { readTextFile } from "@tauri-apps/plugin-fs";
 import type { LineEnding } from "../state/types";
 import { detectLineEnding, normalizeLineEndings } from "../utils/lineEndings";
 
@@ -44,19 +45,34 @@ export interface OpenedFile {
   lineEnding: LineEnding;
 }
 
-/** Opens multiple Markdown files at once (used for drag-and-drop). */
-export async function pickAndOpenFiles(): Promise<OpenedFile[]> {
+export interface OpenResult {
+  files: OpenedFile[];
+  /** Files that could not be read, with a user-facing reason. */
+  failed: { name: string; message: string }[];
+}
+
+/** Reads several files; one unreadable file does not stop the rest from opening. */
+export async function openFilesAtPaths(paths: string[]): Promise<OpenResult> {
+  const result: OpenResult = { files: [], failed: [] };
+  for (const path of paths) {
+    try {
+      result.files.push(await openFileAtPath(path));
+    } catch (error) {
+      const message = error instanceof FileOperationError ? error.message : toUserMessage(error);
+      result.failed.push({ name: fileNameFromPath(path), message });
+    }
+  }
+  return result;
+}
+
+/** Shows the native Open dialog (multi-select) and reads the chosen files. */
+export async function pickAndOpenFiles(): Promise<OpenResult> {
   const selected = await open({
     multiple: true,
     filters: [{ name: "Markdown", extensions: MARKDOWN_EXTENSIONS }],
   });
-  if (!selected) return [];
-  const paths = Array.isArray(selected) ? selected : [selected];
-  const files: OpenedFile[] = [];
-  for (const path of paths) {
-    files.push(await openFileAtPath(path));
-  }
-  return files;
+  if (!selected) return { files: [], failed: [] };
+  return openFilesAtPaths(Array.isArray(selected) ? selected : [selected]);
 }
 
 export async function openFileAtPath(path: string): Promise<OpenedFile> {
@@ -73,10 +89,10 @@ export async function openFileAtPath(path: string): Promise<OpenedFile> {
   }
 }
 
-/** Writes content to an already-known path. */
+/** Writes content to an already-known path, atomically (temp file + rename) so a crash never truncates it. */
 export async function writeFile(path: string, content: string): Promise<void> {
   try {
-    await writeTextFile(path, content);
+    await invoke("write_text_file_atomic", { path, contents: content });
   } catch (error) {
     throw new FileOperationError(toUserMessage(error), error);
   }
