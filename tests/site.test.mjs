@@ -9,6 +9,7 @@ import { runInNewContext } from "node:vm";
 const page = await readFile(new URL("../site/index.html", import.meta.url), "utf8");
 const script = page.match(/<script id="release-script">([\s\S]*?)<\/script>/)?.[1];
 const css = await readFile(new URL("../site/site.css", import.meta.url), "utf8");
+const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
 const release = "https://github.com/abusuraihsakhri/scribe/releases/download/v0.1.3/";
 const latest = "https://github.com/abusuraihsakhri/scribe/releases/latest";
 
@@ -171,4 +172,22 @@ test("repository text files contain no em dash punctuation", async () => {
   }
 
   await checkDirectory(root);
+});
+
+
+test("comparison describes real capabilities and avoids unsupported performance claims", () => {
+  assert.match(page, /id="compare"/);
+  assert.match(page, /href="#compare"/);
+  assert.match(page, /<table class="compare-table">/);
+  assert.equal((page.match(/<th scope="row">/g) || []).length, 5);
+  assert.match(page, /not a performance benchmark/);
+  assert.match(page, /Offline editing is possible when the site supports it/);
+  assert.match(page, /operating system's webview/);
+  assert.match(page, /Typing assistance/);
+  assert.match(page, /Save safeguards/);
+  assert.match(page, /Editor preferences/);
+  assert.match(css, /@media \(max-width: 700px\)/);
+  assert.match(css, /\.compare-table tbody td::before/);
+  assert.match(readme, /have not been independently verified/);
+  assert.doesNotMatch(readme, /RAM Consumption.*35|Startup Time.*300 ms|Sub-millisecond/);
 });

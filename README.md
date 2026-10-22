@@ -57,21 +57,25 @@ The GitHub Pages site includes screenshots, features, shortcuts, and links to pu
 
 **Scribe** is a fast, distraction-free desktop Markdown editor engineered from the ground up for writers, developers, researchers, and note-takers who value speed, simplicity, and privacy.
 
-Instead of bundling a heavyweight browser runtime like traditional Electron editors, Scribe leverages **Tauri 2** with a lean Rust core and your operating system's native webview engine (WebView2 on Windows, WebKit on macOS/Linux). Paired with **React 19** and the modular **CodeMirror 6** text engine, Scribe delivers instant launch times, negligible memory consumption (<40MB), and instantaneous live preview rendering.
+Instead of bundling a heavyweight browser runtime like traditional Electron editors, Scribe leverages **Tauri 2** with a lean Rust core and your operating system's native webview engine (WebView2 on Windows, WebKit on macOS/Linux). Paired with **React 19** and **CodeMirror 6**, Scribe provides a local Markdown editing workflow with live preview. Startup time, memory consumption, and keystroke latency have not been measured in a reproducible benchmark for this release.
 
 ---
 
 ## 💡 Why Scribe?
 
-| Feature | Scribe (Tauri 2 + CodeMirror 6) | Traditional Electron Editors | Web-Based Markdown Editors |
-|:---|:---:|:---:|:---:|
-| **Startup Time** | **< 300 ms** | 2 – 5 seconds | Dependent on network |
-| **RAM Consumption** | **~35 – 50 MB** | 300 – 800+ MB | 200 – 500 MB (per tab) |
-| **Keystroke Latency** | **Sub-millisecond** | Noticeable on large files | Dependent on connection |
-| **Offline Reliability** | **100% Offline** | 100% Offline | Degraded / None |
-| **Privacy & Telemetry** | **Zero Telemetry** | Often telemetry-heavy | Cloud-hosted data |
-| **Native Feel** | **Native Window & Dialogs** | Web-styled wrappers | Browser container |
+Scribe uses Tauri 2 with the system webview instead of bundling a standalone Chromium engine. The differences below describe architecture and implemented workflows, not measured speed or memory advantages.
 
+| Consideration | Scribe (Tauri 2) | Electron desktop editors | Browser-based editors |
+|:---|:---|:---|:---|
+| **Runtime** | OS-provided webview | Chromium and Node.js included with Electron | Installed web browser |
+| **Local Markdown files** | Native open/save dialogs | Support depends on the editor | Support depends on the site and browser permissions |
+| **Offline use** | Edit and save local documents after installation | Many editors work offline; depends on the product | Some editors work offline, depending on their implementation |
+| **Account** | No account needed for local editing | Varies by product | Varies by product |
+| **Editing workflow** | Tabs, live split preview, find/replace, and command palette | Varies by editor | Varies by editor |
+
+**Evidence:** Scribe's file and editing behavior is implemented in src/filesystem/fs.ts, src/components/Workspace.tsx, src/editor/CodeEditor.tsx, and src/App.tsx. For runtime details, see the [Tauri process model](https://v2.tauri.app/concept/process-model/) and [Electron documentation](https://www.electronjs.org/docs/latest/).
+
+**Limitations:** The previous numerical claims for Scribe startup time, RAM use, and keystroke latency have not been independently verified; no direct, controlled cross-editor benchmark is included in this repository. Claims about other editors' telemetry, connectivity, or performance cannot be generalized across every product. Documents referencing remote images may load those images over the network, even though editing and saving local files do not require an account.
 ---
 
 ## ✨ Key Features
