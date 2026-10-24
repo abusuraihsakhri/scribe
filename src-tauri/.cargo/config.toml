@@ -1,0 +1,6 @@
+# Caps the number of parallel rustc / MSVC linker processes cargo spawns. The default is
+# one process per logical core, which on an initial full build consumes several GB of RAM
+# all at once and can make a 8-16 GB machine unresponsive (system-wide freeze while building).
+# 4 keeps peak build memory in the low-GB range; raise it if you have plenty of RAM/headroom.
+[build]
+jobs = 4

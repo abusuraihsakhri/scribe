@@ -24,6 +24,7 @@ import { pickAndOpenFiles, openFileAtPath, openFilesAtPaths, FileOperationError,
 import { useOpenFileRequests } from "./filesystem/useOpenFileRequests";
 import { useExternalFileChanges } from "./filesystem/useExternalFileChanges";
 import { computeTextStats } from "./utils/textStats";
+import { useDebouncedValue } from "./utils/useDebouncedValue";
 import { applyFormat } from "./editor/formatting";
 import { retainEditorStates } from "./editor/CodeEditor";
 import type { ThemeMode } from "./state/types";
@@ -469,13 +470,18 @@ li + li { margin-top: 0.25em; }
     return () => unlisten?.();
   }, [confirmDiscardIfDirty]);
 
-  // Window title
+  // Window title: depends on the title string, not the doc object, so typing does not
+  // trigger a setTitle IPC call on every keystroke.
+  const windowTitle = activeDoc
+    ? `${isDirty(activeDoc) ? "● " : ""}${activeDoc.title} | Scribe`
+    : "Scribe";
   useEffect(() => {
-    const title = activeDoc ? `${isDirty(activeDoc) ? "● " : ""}${activeDoc.title} | Scribe` : "Scribe";
-    void getCurrentWindow().setTitle(title);
-  }, [activeDoc]);
+    void getCurrentWindow().setTitle(windowTitle);
+  }, [windowTitle]);
 
-  const stats = useMemo(() => computeTextStats(activeDoc?.content ?? ""), [activeDoc?.content]);
+  // Debounced so word/char counts do not recompute for every keystroke on large documents.
+  const debouncedContent = useDebouncedValue(activeDoc?.content ?? "", 150);
+  const stats = useMemo(() => computeTextStats(debouncedContent), [debouncedContent]);
 
   return (
     <div className="flex h-screen flex-col bg-[var(--bg-app)]">

@@ -30,3 +30,9 @@ serde_json = "1"
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
 
+# First `tauri dev` runs compile hundreds of crates with parallel rustc + MSVC linker
+# processes; debug info generation is the largest memory hog. Disabling it keeps the
+# build from exhausting RAM on machines with 8-16 GB, which can freeze the whole OS.
+[profile.dev]
+debug = 0
+
